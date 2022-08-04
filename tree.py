@@ -1,22 +1,25 @@
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 from shapely import geometry
 
-def reach_set_calc(x, reach_range):
+
+def reach_set_calc(x, reach_range): # With given x and reach_range, generate the Polygon that represents R(x)
     p1 = geometry.Point(x[0]-reach_range, x[1]-reach_range)
     p2 = geometry.Point(x[0]+reach_range, x[1]-reach_range)
     p3 = geometry.Point(x[0]+reach_range, x[1]+reach_range)
-    p4 = geometry.Point(x[0]-reach_range, x[1]-reach_range)
+    p4 = geometry.Point(x[0]-reach_range, x[1]+reach_range)
     vertex_list = [p1, p2, p3, p4]
-    reach_set = geometry.Polygon()
+    reach_set = geometry.Polygon(vertex_list)
+    return reach_set
+
+
 class OpNode:
     def __init__(self, node_loc, parent_opnode):    # Set node loc i_t and parent_node i_t-1 as the attributes to newly defined OpNode object
         self.state = node_loc
         self.parent_OpNode = parent_opnode
         self.children_OpNode_list = []
 
-    def add_child_opnode(self, par_op_node):    # Define methods that determines child nodes list with current node (Specific to graph)
+    def add_child_opnode(self):    # Define methods that determines child nodes list with current node (Specific to graph)
         if self.state == 1:
             self.children_OpNode_list = [1, 3]
         elif self.state == 2:
@@ -29,6 +32,32 @@ class OpNode:
     def get_par_opnode(self):
         return self.parent_OpNode
 
+
+if __name__ == "__main__":
+    # An example of plotting multiple sets in one plot
+    x = [np.array([1, 2]), np.array([2, 4]), np.array([4, 1])]
+    figure = []
+    # indx = 0
+    # print(x[2])
+    for x_coord in x:
+        print(x_coord)
+        R_set = reach_set_calc(x_coord, 8)
+        hcoord, vcoord = R_set.exterior.xy
+        print(hcoord)
+        figure += plt.fill(hcoord, vcoord, alpha=0.25, facecolor='red', edgecolor='red')
+
+    plt.show()
+
+    # print(hcoord)
+
+
+
+    # R_set = reach_set_calc(x, 8)
+    # hcoord, vcoord = R_set.exterior.xy
+    # fig, axs = plt.subplots()
+    # axs.fill(hcoord, vcoord, alpha=0.25, facecolor='red', edgecolor='red')
+    # print(f'hcoord: {hcoord} vcoord: {vcoord}')
+    # plt.show()
 
 
 # class Node:
