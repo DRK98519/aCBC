@@ -260,6 +260,7 @@ if __name__ == "__main__":
     ####################################### Optimal Value Approximation #######################################
     # Get all leaf branches in the tree just for observation
     out = [state for state in value_eval_queue if state.t_step == T and state.side.lower() == 'player']
+    print(len(out))
     # Remove all leaf branches in the tree
     value_eval_queue = [state for state in value_eval_queue if state.t_step != T or state.side.lower() != 'player']
     value_list = []
@@ -270,10 +271,13 @@ if __name__ == "__main__":
 
     # Test section for the code only (Delete later)
     last_val_list = []
-    value_eval_queue1 = value_eval_queue
-    value_eval_queue2 = value_eval_queue
+    # We need to reorder value_eval_queue (i0's, x0's, i1's, x1's, i2's)
+
+    value_eval_queue1 = value_eval_queue[:]
+    # value_eval_queue2 = value_eval_queue
     for count in range(10):
-        last_val_list.append(value_eval_queue1.pop())
+        taken_val = value_eval_queue1.pop()
+        last_val_list.append(taken_val)
     for last_val in last_val_list:
         print(last_val.state)
         print(f'time step: {last_val.t_step}')
@@ -281,8 +285,13 @@ if __name__ == "__main__":
     print('\n\n\n')
 
     # print(len(value_eval_queue))
+    counter = 0
     while len(value_eval_queue) > 0:
         # Two given states in value functions
+        print("\n")
+        counter += 1
+        print(f"Iteration Number: {counter}")
+
         given_state_1 = value_eval_queue.pop()
         given_state_2 = given_state_1.parent_state
         t_val = given_state_1.t_step
@@ -304,13 +313,18 @@ if __name__ == "__main__":
                 Value(player_state=given_state_2, oppo_state=given_state_1, t_step=t_val, side='Player', value=opt_val,
                       action=given_state_1.children_state_list[opt_indx])
 
-            print(f"side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
-                  f"t_step: {t_val}")
+            print(f"Value side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
+                  f"Value t_step: {t_val}, "
+                  f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
+            # print(f"V_2: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
 
         elif given_state_1.side.lower() == 'player':    # Case of given x_t-1 and i_t-1, select i_t (1 <= t <= T)
             V_t_val_list = []
             for i_t in given_state_1.children_state_list:
                 V_t = UV_dict[f'V_t={t_val+1} ({given_state_1.state}, {i_t.state})']
+
+                print(f"V_{t_val+1}: {V_t.value}")
+
                 V_t_val_list.append(V_t.value)
 
             opt_val = max(V_t_val_list)
@@ -319,8 +333,9 @@ if __name__ == "__main__":
                 Value(player_state=given_state_1, oppo_state=given_state_2, t_step=t_val+1, side='Opponent',
                       value=opt_val, action=given_state_1.children_state_list[opt_indx])
 
-            print(f"side: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].side}"
-                  f"t_step: {t_val+1}")
+            print(f"Value side: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].side}, "
+                  f"Value t_step: {t_val+1}, "
+                  f"U_{t_val+1}: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].value}")
 
         elif given_state_1.side.lower() == 'opponent':  # Case of given x_t-1 and i_t, select x_t. t!=T
             t_val = given_state_1.t_step
@@ -334,39 +349,46 @@ if __name__ == "__main__":
                 val_array = np.array(c_list) + np.array(U_t_plus_1_list)
                 opt_val = min(val_array)     # V_t = min(c + U_t+1)
                 opt_indx = val_array.argmin()
-                UV_dict[f'V_t={t_val} ({given_state_2.state} {given_state_1.state})'] = \
+                UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'] = \
                     Value(player_state=given_state_2, oppo_state=given_state_1, t_step=t_val, side='Player',
                           value=opt_val, action=given_state_1.children_state_list[opt_indx])
 
-                print(f"side: {UV_dict[f'V_t={t_val} ({given_state_2.state} {given_state_1.state})'].side}, "
-                      f"t_step: {t_val}")
+                print(f"Value side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
+                      f"Value t_step: {t_val}, "
+                      f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
+                # print(f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
 
             else:   # t = 0 Given i_0, (Here, i_0.parent_state=dummy_i) find optimal x_0
                 U_1_list = []
                 for x_0 in given_state_1.children_state_list:
-                    U_1_list.append(UV_dict[f"U_t={t_val+1} ({x_0.state} {given_state_1.state})"].value)
+                    U_1_list.append(UV_dict[f"U_t={t_val+1} ({x_0.state}, {given_state_1.state})"].value)
 
                 opt_val = min(U_1_list)
                 opt_indx = U_1_list.index(opt_val)
-                UV_dict[f"V_t={t_val} ({given_state_2.state} {given_state_1.state})"] = \
+                UV_dict[f"V_t={t_val} ({given_state_2.state}, {given_state_1.state})"] = \
                     Value(player_state=given_state_2, oppo_state=given_state_1, t_step=t_val, side='Player',
                           value=opt_val, action=given_state_1.children_state_list[opt_indx])
 
-                print(f"side: {UV_dict[f'V_t={t_val} ({given_state_2.state} {given_state_1.state})'].side}, "
-                      f"t_step: {t_val}")
+                print(f"Value side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
+                      f"Value t_step: {t_val}, "
+                      f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
 
-        # Case of no given states, referring to U_0
-        V_0_list = []
-        for i_0 in dummy_i.children_state_list:
-            V_0_list.append(UV_dict[f"V_t={0} ({dummy_i.state} {i_0.state})"].value)
-        opt_val = max(V_0_list)
-        opt_indx = V_0_list.index(opt_val)
-        UV_dict[f"U_t={0} ({dummy_i.state})"] = \
-            Value(player_state=None, oppo_state=None, t_step=0, side="Opponent",
-                  value=opt_val, action=dummy_i.children_state_list[opt_indx])
+    print('Optimal value approximation loop done. Evaluate U0 next.\n\n')
 
-        print(f"side: {UV_dict[f'U_t={0} ({dummy_i})'].side}, "
-              f"t_step: {0}")
+    # Case of no given states, referring to U_0
+    V_0_list = []
+    for i_0 in dummy_i.children_state_list:
+        V_0_list.append(UV_dict[f'V_t={0} ({dummy_i.state}, {i_0.state})'].value)
+    opt_val = max(V_0_list)
+    opt_indx = V_0_list.index(opt_val)
+    UV_dict[f"U_t={0} ({dummy_i.state}, {None})"] = \
+        Value(player_state=None, oppo_state=None, t_step=0, side="Opponent",
+              value=opt_val, action=dummy_i.children_state_list[opt_indx])
+
+    print(f"Value side: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].side}, "
+          f"Value t_step: {0}, U_{0}: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].value}")
+
+    print("Optimal Value Approximation Done")
 
     # node1 = State(state_val=1, parent_state=dummy_i, t_step=0, side='Opponent')
     # node2 = State(state_val=2, parent_state=dummy_i, t_step=0, side='Opponent')
