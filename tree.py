@@ -26,6 +26,7 @@ def discrete_x_calc(poly, approx_para):
     """
     :type approx_para: int
     :type poly: Polygon
+    :return discrete_x: list
     """
     [hcoord_val, vcoord_val] = poly.exterior.xy  # Find the horizontal and vertical coordinates of poly's vertices
     discrete_x = []
@@ -166,8 +167,10 @@ if __name__ == "__main__":
     node_val = [1, 2, 3]
     colors = ['red', 'blue', 'green']
     indx = 0
+    R = 12  # reach_range value
 
     # Define given Convex Bodies
+    # plt.figure(1)
     for t in range(T + 1):
         for node in node_val:
             Q[f'Q_t={t}^i={node}'] = ConvexBody(t_step=t, node=node, vertices=vertices_list[f't={t}, i={node}'])
@@ -182,9 +185,9 @@ if __name__ == "__main__":
                     plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
                 # plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
         indx += 1
-    plt.grid(True)
-    plt.show()
-    plt.close()
+    plt.ioff()
+    # plt.show()
+    # plt.close()
 
     # Define initial Opponent states i0 as State objects
     i0_vals = [1, 2, 3]
@@ -239,7 +242,7 @@ if __name__ == "__main__":
             # t_val = expanding_state.t_step
             # print(type(x_t_minus_1_val))
             print(f'x_t_minus_1_val={x_t_minus_1_val}, i_t_val={i_t_val}, t_val={t_val}, side={expanding_state.side}')
-            R_set = reach_set_calc(x_t_minus_1_val, reach_range=20)
+            R_set = reach_set_calc(x_t_minus_1_val, reach_range=R)     # 20
             R_intersect_Q = Q[f'Q_t={t_val}^i={i_t_val}'].region.intersection(R_set)
             # print(list(R_intersect_Q.exterior.coords))
             # R_intersect_Q = ConvexBody(t_val, i_t_val, list(R_intersect_Q.exterior.coords))
@@ -270,18 +273,18 @@ if __name__ == "__main__":
     #     print(1)
 
     # Test section for the code only (Delete later)
-    last_val_list = []
-    # We need to reorder value_eval_queue (i0's, x0's, i1's, x1's, i2's)
-
+    # last_val_list = []
+    # # We need to reorder value_eval_queue (i0's, x0's, i1's, x1's, i2's)
+    #
     value_eval_queue1 = value_eval_queue[:]
-    # value_eval_queue2 = value_eval_queue
-    for count in range(10):
-        taken_val = value_eval_queue1.pop()
-        last_val_list.append(taken_val)
-    for last_val in last_val_list:
-        print(last_val.state)
-        print(f'time step: {last_val.t_step}')
-        print(last_val.side)
+    # # value_eval_queue2 = value_eval_queue
+    # for count in range(10):
+    #     taken_val = value_eval_queue1.pop()
+    #     last_val_list.append(taken_val)
+    # for last_val in last_val_list:
+    #     print(last_val.state)
+    #     print(f'time step: {last_val.t_step}')
+    #     print(last_val.side)
     print('\n\n\n')
 
     # print(len(value_eval_queue))
@@ -379,7 +382,7 @@ if __name__ == "__main__":
     V_0_list = []
     for i_0 in dummy_i.children_state_list:
         V_0_list.append(UV_dict[f'V_t={0} ({dummy_i.state}, {i_0.state})'].value)
-    opt_val = max(V_0_list)
+    opt_val = max(V_0_list)     # U0 = max(V0)
     opt_indx = V_0_list.index(opt_val)
     UV_dict[f"U_t={0} ({dummy_i.state}, {None})"] = \
         Value(player_state=None, oppo_state=None, t_step=0, side="Opponent",
@@ -389,6 +392,75 @@ if __name__ == "__main__":
           f"Value t_step: {0}, U_{0}: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].value}")
 
     print("Optimal Value Approximation Done")
+    ################################################ End Here ################################################
+
+    ################################################ Display ################################################
+    # Let user be opponent, show player optimal action approximation for demo (Plot them)
+    t = 0
+    opt_player_action = None
+    opt_player_state = None
+    tot_cost = 0
+    while t <= T:
+        plt.figure(1)
+        print(f"t={t}")
+
+        # I reassigned opt_player_action to avoid warning about potentially undefined opt_player_action in else
+        # statements
+        prev_x_action = opt_player_action
+        prev_x_state = opt_player_state     # Reassignment needed for later generation of R_intersect_Q
+
+        oppo_node = int(input("Enter opponent action: "))
+        if t == 0:
+            if oppo_node not in [1, 2, 3]:
+                print("Invalid selection of node. Try again.")
+            else:
+                oppo_action = [state for state in value_eval_queue1 if state.state == oppo_node and state.t_step == t]
+                oppo_action = oppo_action[0]
+                hcoord, vcoord = Q[f"Q_t={t}^i={oppo_node}"].region.exterior.xy
+                plt.fill(hcoord, vcoord, alpha=0.5, facecolor='red', edgecolor='red')
+                opt_player_action = UV_dict[f"V_t={t} ({oppo_action.parent_state.state}, {oppo_action.state})"].action
+                opt_player_state = opt_player_action.state  # value of optimal x0 approximation in list form
+
+                print(f"Optimal Player State Approximation: {opt_player_state}")
+
+                # previous_x_state = opt_player_state
+                plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1, marker='.')
+                t += 1
+        else:   # t != 0
+            if oppo_node not in [state.state for state in prev_x_action.children_state_list]:
+                print("Invalid selection of node. Try again.")
+            else:
+                oppo_action = \
+                    [state for state in value_eval_queue1 if state.state == oppo_node and state.parent_state ==
+                     prev_x_action][0]
+                # oppo_action = oppo_action[0]
+                # Find optimal x_t state approximation
+                opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
+                opt_player_state = opt_player_action.state
+
+                print(f"Optimal Player State Approximation: {opt_player_state}")
+
+                # Plot R(previous_x) intersect Q
+                R_set = reach_set_calc(prev_x_state, R)
+                R_intersect_Q = Q[f"Q_t={t}^i={oppo_action.state}"].region.intersection(R_set)
+                hcoord, vcoord = R_intersect_Q.exterior.xy
+                plt.fill(hcoord, vcoord, alpha=0.5, facecolor=colors[t], edgecolor=colors[t])
+                # Plot discrete x in R_intersect_Q
+                disc_x_list = discrete_x_calc(R_intersect_Q, approx_para=2)
+                for disc_x in disc_x_list:
+                    plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
+                # Plot optimal x_t state approximation
+                plt.scatter(opt_player_state[0], opt_player_state[1], facecolor='black', linewidths=0.1, marker='.')
+                # Connect optimal x_t state approximation to prev_x_state
+                plt.plot([prev_x_state[0], opt_player_state[0]], [prev_x_state[1], opt_player_state[1]],color='black')
+
+                tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
+                print(f"Total Cost: {tot_cost}")
+                t += 1
+
+    plt.grid(True)
+    plt.show()
+
 
     # node1 = State(state_val=1, parent_state=dummy_i, t_step=0, side='Opponent')
     # node2 = State(state_val=2, parent_state=dummy_i, t_step=0, side='Opponent')
