@@ -2,6 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shapely import geometry
 from numpy.linalg import norm
+# plt.rcParams.update({
+#     "text.usetex": True,
+#     "font.family": "sans-serif",
+#     "font.sans-serif": ["Helvetica"]
+# })
 
 
 # Treat Player state and Opponent state both in State class with different state.value
@@ -18,6 +23,20 @@ def reach_set_calc(x_val, reach_range):  # With given x and reach_range, generat
     vertex_list = [p1, p2, p3, p4]
     reach_set = geometry.Polygon(vertex_list)
     return reach_set
+
+
+def graph_constraint(i_t):
+    """
+    :type i_t: int
+    :return: reachable_nodes: list
+    """
+    if i_t == 1:
+        reachable_nodes = [1, 3]
+    elif i_t == 2:
+        reachable_nodes = [1, 3]
+    else:
+        reachable_nodes = [2, 3]
+    return reachable_nodes
 
 
 # Given a rectangular set, return discrete points inside the set
@@ -67,14 +86,14 @@ def cost_calc(i_t, x_t_minus_1):
 
 class State:
     # Set node loc i_t and parent_node i_t-1 as the attributes to newly defined OpNode object
-    def __init__(self, state_val, parent_state, t_step, side):
+    def __init__(self, state_value, parent_state, t_step, side):
         """
-        :type state_val: int (Opponent), list (Player)
+        :type state_value: int (Opponent), list (Player)
         :type parent_state: State / None (dummy_i)
         :type t_step: int, None(dummy i)
         :type side: str ('Player'/'Opponent')
         """
-        self.state = state_val
+        self.state = state_value
         self.side = side
         self.parent_state = parent_state
         self.children_state_list = []
@@ -146,60 +165,79 @@ class Value:  # Value function
 
 if __name__ == "__main__":
     ################################################ Discretization ################################################
+    # Initialization
     state_queue = []
     value_eval_queue = []  # My idea: Keep adding x and i states in discretization loop for later optimal value approximation. When running optimal value approximation, input opponent action, return optimal player action. Or, directly compute optimal player value and optimal opponent value function together with corresponding optimal player and opponent actions.
-    dummy_i = State(state_val=None, parent_state=None, t_step=None, side=None)
-    # Define given convex bodies Q
+    dummy_i = State(state_value=None, parent_state=None, t_step=None, side=None)
     Q = dict()
     T = 2  # Finite horizon
-    vertices_list = {
-        "t=0, i=1": [np.array([1, 1]), np.array([2, 1]), np.array([2, 2]), np.array([1, 2])],
-        "t=0, i=2": [np.array([3, 3]), np.array([3, 2]), np.array([5, 2]), np.array([5, 3])],
-        # "t=0, i=3": [np.array([1, 7]), np.array([1, 4]), np.array([5, 4]), np.array([5, 7])],
-        "t=0, i=3": [np.array([4, 7]), np.array([4, 4]), np.array([5, 4]), np.array([5, 7])],
-        "t=1, i=1": [np.array([8, 3]), np.array([8, 1]), np.array([11, 1]), np.array([11, 3])],
-        "t=1, i=2": [np.array([12, 6]), np.array([12, 3]), np.array([14, 3]), np.array([14, 6])],
-        "t=1, i=3": [np.array([7, 6]), np.array([7, 4]), np.array([9, 4]), np.array([9, 6])],
-        "t=2, i=1": [np.array([10, 6]), np.array([10, 5]), np.array([11, 5]), np.array([11, 6])],
-        "t=2, i=2": [np.array([6, 10]), np.array([6, 7]), np.array([11, 7]), np.array([11, 10])],
-        "t=2, i=3": [np.array([12, 10]), np.array([12, 8]), np.array([14, 8]), np.array([14, 10])]
-    }
-
     node_vals = [1, 2, 3]
     colors = ['red', 'blue', 'green']
+    line_style_list = ['-', '--', '-.']
     indx = 0
-    R = 8.5  # reach_range value
-    disc_para = 5
+    disc_para = 10   # Constant reach range for any x here. Done for simplicity.
+    num_nodes = 3
+    # vertices_list = {
+    #     "t=0, i=1": [np.array([1, 1]), np.array([2, 1]), np.array([2, 2]), np.array([1, 2])],
+    #     "t=0, i=2": [np.array([3, 3]), np.array([3, 2]), np.array([5, 2]), np.array([5, 3])],
+    #     "t=0, i=3": [np.array([4, 7]), np.array([4, 4]), np.array([5, 4]), np.array([5, 7])],
+    #     "t=1, i=1": [np.array([8, 3]), np.array([8, 1]), np.array([11, 1]), np.array([11, 3])],
+    #     "t=1, i=2": [np.array([12, 6]), np.array([12, 3]), np.array([14, 3]), np.array([14, 6])],
+    #     "t=1, i=3": [np.array([7, 6]), np.array([7, 4]), np.array([9, 4]), np.array([9, 6])],
+    #     "t=2, i=1": [np.array([10, 6]), np.array([10, 5]), np.array([11, 5]), np.array([11, 6])],
+    #     "t=2, i=2": [np.array([6, 10]), np.array([6, 7]), np.array([11, 7]), np.array([11, 10])],
+    #     "t=2, i=3": [np.array([12, 10]), np.array([12, 8]), np.array([14, 8]), np.array([14, 10])]
+    # }
+    # R = 8.5  # reach_range value (The value would vary depending on the given convex bodies)
+
+    vertices_list = {
+        "t=0, i=1": [np.array([8, 6]), np.array([10, 6]), np.array([10, 11]), np.array([8, 11])],
+        "t=0, i=2": [np.array([26, 20]), np.array([32, 20]), np.array([32, 24]), np.array([26, 24])],
+        "t=0, i=3": [np.array([9, 36]), np.array([11.5, 36]), np.array([11.5, 46]), np.array([9, 46])],
+        "t=1, i=1": [np.array([10, 25]), np.array([15, 25]), np.array([15, 30]), np.array([10, 30])],
+        "t=1, i=2": [np.array([34, 38]), np.array([36, 38]), np.array([36, 40]), np.array([34, 40])],
+        "t=1, i=3": [np.array([44, 8]), np.array([48, 8]), np.array([48, 12]), np.array([44, 12])],
+        "t=2, i=1": [np.array([14, 38]), np.array([22, 38]), np.array([22, 40]), np.array([14, 40])],
+        "t=2, i=2": [np.array([14, 2]), np.array([28, 2]), np.array([28, 6]), np.array([14, 6])],
+        "t=2, i=3": [np.array([45, 25]), np.array([50, 25]), np.array([50, 45]), np.array([45, 45])]
+    }
+    R = 36.7
+
+    # Find a way to save all value functions and optimal strategy approximation and discrete x's for testing purpose.
 
     # Define given Convex Bodies
-    # plt.figure(1)
+    fig1 = plt.figure(1)
     for t in range(T + 1):
         for node in node_vals:
             Q[f'Q_t={t}^i={node}'] = ConvexBody(t_step=t, node=node, vertices=vertices_list[f't={t}, i={node}'])
             hcoord, vcoord = Q[f'Q_t={t}^i={node}'].region.exterior.xy
-            plt.figure(1)
-            plt.fill(hcoord, vcoord, alpha=0.25, facecolor=colors[indx], edgecolor=colors[indx])
-            # disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={node}'].region, disc_para)
+            # plt.figure()
+            plt.fill(hcoord, vcoord, alpha=0.25, facecolor=colors[indx], edgecolor=colors[indx],
+                     linestyle=line_style_list[node-1], linewidth=2, label=fr"$Q_{t}^{{({node})}}$")
+            disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={node}'].region, disc_para)
             # print(disc_x0_list)
+
             # Plot discrete x0 in Q0 sets (For test)
-            # if t == 0:
-            #     for disc_x0 in disc_x0_list:
-            #         plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
-            #         plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
+            if t == 0:
+                for disc_x0 in disc_x0_list:
+                    plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
+                    plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
         indx += 1
-    plt.legend()
+    plt.legend(fontsize=8)
     plt.grid(True)
-    plt.ioff()
-    # plt.show()
-    # plt.close()
+    plt.title(fr"Given Convex Bodies (T = {T})")
+    plt.savefig(f"Given Convex Bodies.png")
+    plt.axis('equal')
+    plt.show()
 
     # Define initial Opponent states i0 as State objects
-    i0_vals = [1, 2, 3]
+    i0_vals = range(1, num_nodes+1)
+    # i0_vals = [1, 2, 3]
     for i0_val in i0_vals:
-        new_state = State(state_val=i0_val, parent_state=dummy_i, t_step=0, side='Opponent')
+        new_state = State(state_value=i0_val, parent_state=dummy_i, t_step=0, side='Opponent')
         dummy_i.add_child_state(new_state)
         state_queue.append(new_state)  # Add all initial i_0 into state_queue, start expanding here
-    print(state_queue)
+    # print(state_queue)
 
     while len(state_queue) > 0:
         # t_val = 0
@@ -216,7 +254,7 @@ if __name__ == "__main__":
             disc_x_list = discrete_x_calc(Q[f'Q_t={t_val}^i={i_t_val}'].region, approx_para=disc_para)
             for disc_x in disc_x_list:
                 # print(disc_x)
-                new_state = State(state_val=disc_x, parent_state=expanding_state, t_step=t_val, side='Player')
+                new_state = State(state_value=disc_x, parent_state=expanding_state, t_step=t_val, side='Player')
                 expanding_state.add_child_state(new_state)
                 state_queue.append(new_state)
         # Find children states of a Player state
@@ -226,12 +264,13 @@ if __name__ == "__main__":
             print(f'x_t_val={expanding_state.state}, t_val={t_val}, side={expanding_state.side}')
             if t_val != T:  # x_t is not terminal state if t != T
                 # Particular to given graph
-                if i_t_val == 1:
-                    new_state_list = [1, 3]
-                elif i_t_val == 2:
-                    new_state_list = [1, 3]
-                else:  # i_t_val == 3
-                    new_state_list = [2, 3]
+                # if i_t_val == 1:
+                #     new_state_list = [1, 3]
+                # elif i_t_val == 2:
+                #     new_state_list = [1, 3]
+                # else:  # i_t_val == 3
+                #     new_state_list = [2, 3]
+                new_state_list = graph_constraint(i_t_val)
 
                 for state_val in new_state_list:
                     new_state = State(state_val, parent_state=expanding_state, t_step=t_val + 1, side='Opponent')
@@ -254,7 +293,7 @@ if __name__ == "__main__":
             disc_x_list = discrete_x_calc(R_intersect_Q, approx_para=disc_para)
             for disc_x in disc_x_list:
                 # print(disc_x)
-                new_state = State(state_val=disc_x, parent_state=expanding_state, t_step=t_val, side='Player')
+                new_state = State(state_value=disc_x, parent_state=expanding_state, t_step=t_val, side='Player')
                 expanding_state.add_child_state(new_state)
                 state_queue.append(new_state)
         # print(state_queue)
@@ -330,7 +369,7 @@ if __name__ == "__main__":
             for i_t in given_state_1.children_state_list:
                 V_t = UV_dict[f'V_t={t_val+1} ({given_state_1.state}, {i_t.state})']
 
-                print(f"V_{t_val+1}: {V_t.value}")
+                # print(f"V_{t_val+1}: {V_t.value}")
 
                 V_t_val_list.append(V_t.value)
 
@@ -342,7 +381,9 @@ if __name__ == "__main__":
 
             print(f"Value side: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].side}, "
                   f"Value t_step: {t_val+1}, "
-                  f"U_{t_val+1}: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].value}")
+                  f"U_{t_val+1}: {UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].value}, "
+                  f"opt_i_{t_val+1}: "
+                  f"{UV_dict[f'U_t={t_val+1} ({given_state_1.state}, {given_state_2.state})'].action.state}")
 
         elif given_state_1.side.lower() == 'opponent':  # Case of given x_t-1 and i_t, select x_t. t!=T
             t_val = given_state_1.t_step
@@ -362,7 +403,9 @@ if __name__ == "__main__":
 
                 print(f"Value side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
                       f"Value t_step: {t_val}, "
-                      f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
+                      f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value},"
+                      f"opt_x{t_val}: "
+                      f"{UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].action.state}")
                 # print(f"V_{t_val}: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].value}")
 
             else:   # t = 0 Given i_0, (Here, i_0.parent_state=dummy_i) find optimal x_0
@@ -370,11 +413,22 @@ if __name__ == "__main__":
                 for x_0 in given_state_1.children_state_list:
                     U_1_list.append(UV_dict[f"U_t={t_val+1} ({x_0.state}, {given_state_1.state})"].value)
 
+                    # For test purpose
+                    # print(f"U_{1}: {UV_dict[f'U_t={t_val+1} ({x_0.state}, {given_state_1.state})'].value}, "
+                    #       f"x0 state: {x_0.state}")
+                    # print(f"x0 check: "
+                    #       f"{UV_dict[f'U_t={t_val+1} ({x_0.state}, {given_state_1.state})'].player_state.state}")
+
                 opt_val = min(U_1_list)
                 opt_indx = U_1_list.index(opt_val)
                 UV_dict[f"V_t={t_val} ({given_state_2.state}, {given_state_1.state})"] = \
                     Value(player_state=given_state_2, oppo_state=given_state_1, t_step=t_val, side='Player',
                           value=opt_val, action=given_state_1.children_state_list[opt_indx])
+
+                # For test (delete later)
+                if given_state_1.state == 2:
+                    opt_x0 = UV_dict[f"V_t={t_val} ({given_state_2.state}, {given_state_1.state})"].action
+                    print(f"i_{t_val}: {given_state_1.state}, opt x_{t_val}: {opt_x0.state}")
 
                 print(f"Value side: {UV_dict[f'V_t={t_val} ({given_state_2.state}, {given_state_1.state})'].side}, "
                       f"Value t_step: {t_val}, "
@@ -393,7 +447,8 @@ if __name__ == "__main__":
               value=opt_val, action=dummy_i.children_state_list[opt_indx])
 
     print(f"Value side: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].side}, "
-          f"Value t_step: {0}, U_{0}: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].value}")
+          f"Value t_step: {0}, U_{0}: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].value}, "
+          f"opt_i0: {UV_dict[f'U_t={0} ({dummy_i.state}, {None})'].action.state}")
 
     print("Optimal Value Approximation Done")
     ################################################ End Here ################################################
@@ -402,13 +457,14 @@ if __name__ == "__main__":
     # Let user be opponent, show player optimal action approximation for demo (Plot them)
     # t = 0
     msg = ''
+    oppo_hist = dict()
     while msg.lower() != 'n':
         t = 0
         opt_player_action = None
         opt_player_state = None
         tot_cost = 0
         while t <= T:
-            plt.figure(2)
+            fig2 = plt.figure(2)
             print(f"\nt={t}")
 
             # I reassigned opt_player_action to avoid warning about potentially undefined opt_player_action in else
@@ -427,6 +483,9 @@ if __name__ == "__main__":
                 else:
                     oppo_action = [state for state in value_eval_queue1 if state.state == oppo_node and state.t_step == t]
                     oppo_action = oppo_action[0]
+
+                    oppo_hist[f"i{t}"] = oppo_action.state
+
                     # Plot Q0
                     hcoord, vcoord = Q[f"Q_t={t}^i={oppo_node}"].region.exterior.xy
                     plt.fill(hcoord, vcoord, alpha=0.5, facecolor='red', edgecolor='red')
@@ -450,6 +509,9 @@ if __name__ == "__main__":
                     oppo_action = \
                         [state for state in value_eval_queue1 if state.state == oppo_node and state.parent_state ==
                          prev_x_action][0]
+
+                    oppo_hist[f"i{t}"] = oppo_action.state
+
                     # oppo_action = oppo_action[0]
                     # Find optimal x_t state approximation
                     opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
@@ -480,6 +542,10 @@ if __name__ == "__main__":
                     t += 1
         plt.grid(True)
         plt.axis('equal')
+        plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, $i_2={oppo_hist['i2']}$ "
+                  f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
+        # plt.show()
+        plt.savefig(f"Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, disc_para={disc_para}")
         plt.show()
         msg = input("Rerun? [Y/N] ")
 
