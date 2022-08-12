@@ -3,15 +3,9 @@ import matplotlib.pyplot as plt
 from shapely import geometry
 from numpy.linalg import norm
 from random import *
-# plt.rcParams.update({
-#     "text.usetex": True,
-#     "font.family": "sans-serif",
-#     "font.sans-serif": ["Helvetica"]
-# })
 
 
 def set_plotter(set, plt_color, alpha_val):
-# def convex_set_plotter(Q, t, i_t, color_list, alpha_val):
     """
     :type set: Polygon
     :type plt_color: string
@@ -20,14 +14,13 @@ def set_plotter(set, plt_color, alpha_val):
     """
     hcoord, vcoord = set.exterior.xy
     plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
-    # hcoord, vcoord = Q[f"Q_t={t}^i={i_t}"].region.exterior.xy
-    # plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=color_list[t], edgecolor=color_list[t])
 
 
-def convex_vertices_gen(num_nodes, T):
+def convex_vertices_gen(num_nodes, T, region_para):
     """
     :type num_nodes: int
     :type T: int
+    :type region_para: float
     :return: vertex_list: dict
     """
     # coord_list = []
@@ -39,7 +32,7 @@ def convex_vertices_gen(num_nodes, T):
             while len(coord_list) <= 4:
                 sign = randint(-1, 1)
                 if sign != 0:
-                    coord_list.append(random() * 10 * sign)
+                    coord_list.append(random() * region_para * sign)
 
             print(len(coord_list))
             print(coord_list)
@@ -192,18 +185,6 @@ class Value:  # Value function
         self.action = action
 
 
-# class Cost:
-#     def __init__(self, x_t_minus_1_val, x_t_val, cost_val):
-#         """
-#         :type x_t_minus_1_val: State
-#         :type x_t_val: State
-#         :type cost_val: float
-#         """
-#         self.x_t_minus_1_val = x_t_minus_1_val
-#         self.x_t_val = x_t_val
-#         self.cost_val = cost_val
-
-
 if __name__ == "__main__":
     ################################################ Discretization ################################################
     # Initialization
@@ -215,7 +196,6 @@ if __name__ == "__main__":
     node_vals = [1, 2, 3]
     colors = ['red', 'blue', 'green']
     line_style_list = ['-', '--', '-.']
-    indx = 0
     disc_para = 5   # Constant reach range for any x here. Done for simplicity.
     num_nodes = 3
     # vertices_list = {
@@ -244,8 +224,10 @@ if __name__ == "__main__":
     # }
     # R = 36.7
 
-    vertices_list = convex_vertices_gen(num_nodes, T)
-    R = 100     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid this issue
+    scale_para = 100
+    plt_scale = [-scale_para, scale_para, -scale_para, scale_para]
+    vertices_list = convex_vertices_gen(num_nodes, T, scale_para)
+    R = 2 * scale_para     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid this issue
 
     # Find a way to save all value functions and optimal strategy approximation and discrete x's for testing purpose.
 
@@ -254,11 +236,11 @@ if __name__ == "__main__":
     for t in range(T + 1):
         for node in node_vals:
             Q[f'Q_t={t}^i={node}'] = ConvexBody(t_step=t, node=node, vertices=vertices_list[f't={t}, i={node}'])
-            hcoord, vcoord = Q[f'Q_t={t}^i={node}'].region.exterior.xy
-            # plt.figure()
-            plt.fill(hcoord, vcoord, alpha=0.25, facecolor=colors[indx], edgecolor=colors[indx],
-                     linestyle=line_style_list[node-1], linewidth=2, label=fr"$Q_{t}^{{({node})}}$")
-            disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={node}'].region, disc_para)
+            # hcoord, vcoord = Q[f'Q_t={t}^i={node}'].region.exterior.xy
+            # # plt.figure()
+            # plt.fill(hcoord, vcoord, alpha=0.1, facecolor=colors[indx], edgecolor=colors[indx],
+            #          linestyle=line_style_list[node-1], linewidth=2, label=fr"$Q_{t}^{{({node})}}$")
+            # disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={node}'].region, disc_para)
             # print(disc_x0_list)
 
             # Plot discrete x0 in Q0 sets (For test)
@@ -266,17 +248,16 @@ if __name__ == "__main__":
             #     for disc_x0 in disc_x0_list:
             #         plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
             #         plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
-        indx += 1
-    plt.legend(fontsize=8)
-    plt.grid(True)
-    plt.title(fr"Given Convex Bodies (T = {T})")
-    plt.savefig(f"Given Convex Bodies.png")
-    plt.axis('equal')
-    plt.show()
+        # indx += 1
+    # plt.legend(fontsize=8)
+    # plt.grid(True)
+    # plt.title(fr"Given Convex Bodies (T = {T})")
+    # plt.savefig(f"Given Convex Bodies.png")
+    # plt.axis(plt_scale)
+    # plt.show()
 
     # Define initial Opponent states i0 as State objects
     i0_vals = range(1, num_nodes+1)
-    # i0_vals = [1, 2, 3]
     for i0_val in i0_vals:
         new_state = State(state_value=i0_val, parent_state=dummy_i, t_step=0, side='Opponent')
         dummy_i.add_child_state(new_state)
@@ -520,7 +501,7 @@ if __name__ == "__main__":
             tot_cost = 0
             # oppo_hist = dict()
             while t <= T:
-                fig2 = plt.figure(2)
+                # fig2 = plt.figure(2)
                 print(f"\nt={t}")
 
                 # I reassigned opt_player_action to avoid warning about potentially undefined opt_player_action in else
@@ -528,10 +509,6 @@ if __name__ == "__main__":
                 prev_x_action = opt_player_action
                 prev_x_state = opt_player_state     # Reassignment needed for later generation of R_intersect_Q
 
-                # try:
-                #     oppo_node = int(input("Enter opponent action: "))
-                # except ValueError:
-                #     print("Invalid selection of node. Try again.")
                 oppo_node = int(input("Enter opponent action: "))
                 if t == 0:
                     if oppo_node not in [1, 2, 3]:
@@ -551,7 +528,7 @@ if __name__ == "__main__":
                         # Plot discrete x0 in Q0
                         disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={oppo_node}'].region, disc_para)
                         for disc_x0 in disc_x0_list:
-                            plt.scatter(disc_x0[0], disc_x0[1], color=colors[t], linewidths=0.1, marker='.')
+                            plt.scatter(disc_x0[0], disc_x0[1], color=colors[t], linewidths=0.5, marker='.')
 
                         opt_player_action = UV_dict[f"V_t={t} ({oppo_action.parent_state.state}, {oppo_action.state})"].action
                         opt_player_state = opt_player_action.state  # value of optimal x0 approximation in list form
@@ -604,16 +581,12 @@ if __name__ == "__main__":
                         tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
                         print(f"Total Cost: {tot_cost}")
                         t += 1
-            plt.grid(True)
-            plt.axis('equal')
             plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, $i_2={oppo_hist['i2']}$ "
                       f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
-            # plt.show()
             plt.savefig(f"Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, disc_para={disc_para}")
-            plt.show()
+            # plt.show()
 
         elif control == '1':
-            print('Need work')
             prev_x_action = dummy_i
             opt_oppo_action = dummy_i
             tot_cost = 0
@@ -681,15 +654,22 @@ if __name__ == "__main__":
                 prev_x_action = opt_player_action
 
             # Plot display
-            plt.grid(True)
-            plt.axis('equal')
             plt.title(fr"Optimal Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
                       fr"$i_2={oppo_hist['i2']}$ "
                       f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
             plt.savefig(f"Optimal Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, "
                         f"disc_para={disc_para}")
-            plt.show()
-
+            # plt.show()
+        # Plot all given convex sets
+        for t_val in range(T+1):
+            for node in node_vals:
+                hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
+                plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=colors[t_val], edgecolor=colors[t_val], linewidth=2,
+                         linestyle=line_style_list[node-1], label=fr"$Q_{t_val}^{{({node})}}$")
+        plt.legend(fontsize=8)
+        plt.grid(True)
+        plt.axis(plt_scale)
+        plt.show()
         msg = input("Rerun? [Y/N] ")
 
 
