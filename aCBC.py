@@ -10,6 +10,20 @@ from random import *
 # })
 
 
+def set_plotter(set, plt_color, alpha_val):
+# def convex_set_plotter(Q, t, i_t, color_list, alpha_val):
+    """
+    :type set: Polygon
+    :type plt_color: string
+    :type alpha_val: float
+    :return: None
+    """
+    hcoord, vcoord = set.exterior.xy
+    plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
+    # hcoord, vcoord = Q[f"Q_t={t}^i={i_t}"].region.exterior.xy
+    # plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=color_list[t], edgecolor=color_list[t])
+
+
 def convex_vertices_gen(num_nodes, T):
     """
     :type num_nodes: int
@@ -248,10 +262,10 @@ if __name__ == "__main__":
             # print(disc_x0_list)
 
             # Plot discrete x0 in Q0 sets (For test)
-            if t == 0:
-                for disc_x0 in disc_x0_list:
-                    plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
-                    plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
+            # if t == 0:
+            #     for disc_x0 in disc_x0_list:
+            #         plt.scatter(disc_x0[0], disc_x0[1], color=colors[indx], linewidths=0.1, marker='.')
+            #         plt.plot(disc_x0[0], disc_x0[1], color=colors[indx])
         indx += 1
     plt.legend(fontsize=8)
     plt.grid(True)
@@ -487,7 +501,7 @@ if __name__ == "__main__":
     # control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
     # if control == '1':
 
-    t = 0
+    # t = 0
     msg = ''
     oppo_hist = dict()
 
@@ -495,113 +509,189 @@ if __name__ == "__main__":
     # opt_player_state = None
     # tot_cost = 0
     while msg.lower() != 'n':
-        # control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
-        # if control == '1':
-        # Let user be opponent, show player optimal action approximation for demo (Plot them)
-        t = 0
-        opt_player_action = None
-        opt_player_state = None
-        tot_cost = 0
-        while t <= T:
-            fig2 = plt.figure(2)
-            print(f"\nt={t}")
+        control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
+        if control not in ['1', '2']:
+            print('Invalid game setting. Select again.')
+        elif control == '2':
+            # Let user be opponent, show player optimal action approximation for demo (Plot them)
+            t = 0
+            opt_player_action = None
+            opt_player_state = None
+            tot_cost = 0
+            # oppo_hist = dict()
+            while t <= T:
+                fig2 = plt.figure(2)
+                print(f"\nt={t}")
 
-            # I reassigned opt_player_action to avoid warning about potentially undefined opt_player_action in else
-            # statements
-            prev_x_action = opt_player_action
-            prev_x_state = opt_player_state     # Reassignment needed for later generation of R_intersect_Q
+                # I reassigned opt_player_action to avoid warning about potentially undefined opt_player_action in else
+                # statements
+                prev_x_action = opt_player_action
+                prev_x_state = opt_player_state     # Reassignment needed for later generation of R_intersect_Q
 
-            # try:
-            #     oppo_node = int(input("Enter opponent action: "))
-            # except ValueError:
-            #     print("Invalid selection of node. Try again.")
-            oppo_node = int(input("Enter opponent action: "))
-            if t == 0:
-                if oppo_node not in [1, 2, 3]:
-                    print("Invalid selection of node. Try again.")
-                else:
-                    oppo_action = [state for state in value_eval_queue1 if state.state == oppo_node and state.t_step == t]
-                    oppo_action = oppo_action[0]
+                # try:
+                #     oppo_node = int(input("Enter opponent action: "))
+                # except ValueError:
+                #     print("Invalid selection of node. Try again.")
+                oppo_node = int(input("Enter opponent action: "))
+                if t == 0:
+                    if oppo_node not in [1, 2, 3]:
+                        print("Invalid selection of node. Try again.")
+                    else:
+                        oppo_action = [state for state in value_eval_queue1 if state.state == oppo_node and state.t_step == t]
+                        oppo_action = oppo_action[0]
 
-                    oppo_hist[f"i{t}"] = oppo_action.state
+                        oppo_hist[f"i{t}"] = oppo_action.state
 
+                        # Plot Q0
+                        Q0 = Q[f"Q_t={t}^i={oppo_node}"]
+                        set_plotter(Q0.region, colors[t], alpha_val=0.5)
+                        # hcoord, vcoord = Q[f"Q_t={t}^i={oppo_node}"].region.exterior.xy
+                        # plt.fill(hcoord, vcoord, alpha=0.5, facecolor='red', edgecolor='red')
+
+                        # Plot discrete x0 in Q0
+                        disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={oppo_node}'].region, disc_para)
+                        for disc_x0 in disc_x0_list:
+                            plt.scatter(disc_x0[0], disc_x0[1], color=colors[t], linewidths=0.1, marker='.')
+
+                        opt_player_action = UV_dict[f"V_t={t} ({oppo_action.parent_state.state}, {oppo_action.state})"].action
+                        opt_player_state = opt_player_action.state  # value of optimal x0 approximation in list form
+
+                        print(f"Optimal Player State Approximation: {opt_player_state}")
+
+                        # previous_x_state = opt_player_state
+                        plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1, marker='.')
+                        t += 1
+                else:   # t != 0
+                    if oppo_node not in [state.state for state in prev_x_action.children_state_list]:
+                        print("Invalid selection of node. Try again.")
+                    else:
+                        oppo_action = \
+                            [state for state in value_eval_queue1 if state.state == oppo_node and state.parent_state ==
+                             prev_x_action][0]
+
+                        oppo_hist[f"i{t}"] = oppo_action.state
+
+                        # oppo_action = oppo_action[0]
+                        # Find optimal x_t state approximation
+                        opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
+                        opt_player_state = opt_player_action.state
+
+                        print(f"Optimal Player State Approximation: {opt_player_state}")
+
+                        # Plot Q
+                        Qt = Q[f"Q_t={t}^i={oppo_action.state}"]
+                        set_plotter(Qt.region, colors[t], alpha_val=0.25)
+
+                        # hcoord, vcoord = Q[f"Q_t={t}^i={oppo_action.state}"].region.exterior.xy
+                        # plt.fill(hcoord, vcoord, alpha=0.25, facecolor=colors[t], edgecolor=colors[t])
+
+                        # Plot R(previous_x) intersect Q
+                        R_set = reach_set_calc(prev_x_state, R)
+                        R_intersect_Q = Q[f"Q_t={t}^i={oppo_action.state}"].region.intersection(R_set)
+                        set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
+                        # hcoord_inter, vcoord_inter = R_intersect_Q.exterior.xy
+                        # plt.fill(hcoord_inter, vcoord_inter, alpha=0.5, facecolor=colors[t], edgecolor=colors[t])
+
+                        # Plot discrete x in R_intersect_Q
+                        disc_x_list = discrete_x_calc(R_intersect_Q, approx_para=disc_para)
+                        for disc_x in disc_x_list:
+                            plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
+                        # Plot optimal x_t state approximation
+                        plt.scatter(opt_player_state[0], opt_player_state[1], facecolor='black', linewidths=0.1, marker='.')
+                        # Connect optimal x_t state approximation to prev_x_state
+                        plt.plot([prev_x_state[0], opt_player_state[0]], [prev_x_state[1], opt_player_state[1]],color='black')
+
+                        tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
+                        print(f"Total Cost: {tot_cost}")
+                        t += 1
+            plt.grid(True)
+            plt.axis('equal')
+            plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, $i_2={oppo_hist['i2']}$ "
+                      f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
+            # plt.show()
+            plt.savefig(f"Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, disc_para={disc_para}")
+            plt.show()
+
+        elif control == '1':
+            print('Need work')
+            prev_x_action = dummy_i
+            opt_oppo_action = dummy_i
+            tot_cost = 0
+            # oppo_hist = dict()
+            for t in range(T+1):
+                if t == 0:
+                    # Find optimal i_0
+                    opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
                     # Plot Q0
-                    hcoord, vcoord = Q[f"Q_t={t}^i={oppo_node}"].region.exterior.xy
-                    plt.fill(hcoord, vcoord, alpha=0.5, facecolor='red', edgecolor='red')
-                    # Plot discrete x0 in Q0
-                    disc_x0_list = discrete_x_calc(Q[f'Q_t={t}^i={oppo_node}'].region, disc_para)
-                    for disc_x0 in disc_x0_list:
-                        plt.scatter(disc_x0[0], disc_x0[1], color=colors[t], linewidths=0.1, marker='.')
+                    Q0 = Q[f'Q_t={t}^i={opt_oppo_action.state}']
+                    set_plotter(Q0.region, colors[t], alpha_val=0.5)
 
-                    opt_player_action = UV_dict[f"V_t={t} ({oppo_action.parent_state.state}, {oppo_action.state})"].action
-                    opt_player_state = opt_player_action.state  # value of optimal x0 approximation in list form
+                    # Find discrete x0 in Q0
+                    disc_x_list = discrete_x_calc(Q0.region, disc_para)
 
-                    print(f"Optimal Player State Approximation: {opt_player_state}")
+                    # # Output message
+                    # print(f"\nt={t}")
+                    # print(f"Optimal i{t}: {opt_oppo_action.state}")
 
-                    # previous_x_state = opt_player_state
-                    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1, marker='.')
-                    t += 1
-            else:   # t != 0
-                if oppo_node not in [state.state for state in prev_x_action.children_state_list]:
-                    print("Invalid selection of node. Try again.")
-                else:
-                    oppo_action = \
-                        [state for state in value_eval_queue1 if state.state == oppo_node and state.parent_state ==
-                         prev_x_action][0]
+                else:   # when t is not 0
+                    # Find optimal i_t
+                    opt_oppo_action = UV_dict[f"U_t={t} ({prev_x_action.state}, {opt_oppo_action.state})"].action
 
-                    oppo_hist[f"i{t}"] = oppo_action.state
+                    # Generate R(previous_x) intersect Q
+                    R_set = reach_set_calc(prev_x_action.state, R)
+                    Qt = Q[f"Q_t={t}^i={opt_oppo_action.state}"]
+                    R_intersect_Q = Qt.region.intersection(R_set)
 
-                    # oppo_action = oppo_action[0]
-                    # Find optimal x_t state approximation
-                    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
-                    opt_player_state = opt_player_action.state
-
-                    print(f"Optimal Player State Approximation: {opt_player_state}")
-
-                    # Plot Q
-                    hcoord, vcoord = Q[f"Q_t={t}^i={oppo_action.state}"].region.exterior.xy
-                    plt.fill(hcoord, vcoord, alpha=0.25, facecolor=colors[t], edgecolor=colors[t])
+                    # Plot Qt
+                    set_plotter(Qt.region, colors[t], alpha_val=0.25)
 
                     # Plot R(previous_x) intersect Q
-                    R_set = reach_set_calc(prev_x_state, R)
-                    R_intersect_Q = Q[f"Q_t={t}^i={oppo_action.state}"].region.intersection(R_set)
-                    hcoord_inter, vcoord_inter = R_intersect_Q.exterior.xy
-                    plt.fill(hcoord_inter, vcoord_inter, alpha=0.5, facecolor=colors[t], edgecolor=colors[t])
-                    # Plot discrete x in R_intersect_Q
-                    disc_x_list = discrete_x_calc(R_intersect_Q, approx_para=disc_para)
-                    for disc_x in disc_x_list:
-                        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
-                    # Plot optimal x_t state approximation
-                    plt.scatter(opt_player_state[0], opt_player_state[1], facecolor='black', linewidths=0.1, marker='.')
-                    # Connect optimal x_t state approximation to prev_x_state
-                    plt.plot([prev_x_state[0], opt_player_state[0]], [prev_x_state[1], opt_player_state[1]],color='black')
+                    set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
 
-                    tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
+                    # Find discrete x in R_intersect_Q
+                    disc_x_list = discrete_x_calc(R_intersect_Q, disc_para)
+
+                # Output message
+                print(f"\nt={t}")
+                print(f"Optimal i{t}: {opt_oppo_action.state}")
+
+                # Plot discrete x in sets
+                for disc_x in disc_x_list:
+                    plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
+                # Store optimal opponent history
+                oppo_hist[f"i{t}"] = opt_oppo_action.state
+                # Given x_t-1 and i_t, find approximation of optimal x_t
+                opt_player_action = \
+                    UV_dict[f"V_t={t} ({opt_oppo_action.parent_state.state}, {opt_oppo_action.state})"].action
+
+                print(f"Optimal Player State Approximation: {opt_player_action.state}")
+
+                # Plot optimal x_t state approximation
+                plt.scatter(opt_player_action.state[0], opt_player_action.state[1], facecolor='black', linewidth=0.1,
+                            marker='.')
+
+                # Connect optimal x_t state approximation to prev_x_state
+                if t != 0:
+                    plt.plot([prev_x_action.state[0], opt_player_action.state[0]],
+                             [prev_x_action.state[1], opt_player_action.state[1]], color='black')
+                    # Update total cost
+                    tot_cost += norm(np.array(prev_x_action.state) - np.array(opt_player_action.state), 2)
                     print(f"Total Cost: {tot_cost}")
-                    t += 1
-        plt.grid(True)
-        plt.axis('equal')
-        plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, $i_2={oppo_hist['i2']}$ "
-                  f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
-        # plt.show()
-        plt.savefig(f"Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, disc_para={disc_para}")
-        plt.show()
+
+                prev_x_action = opt_player_action
+
+            # Plot display
+            plt.grid(True)
+            plt.axis('equal')
+            plt.title(fr"Optimal Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                      fr"$i_2={oppo_hist['i2']}$ "
+                      f"\n{disc_para}x{disc_para} Discretization, Total Cost={round(tot_cost, 4)}")
+            plt.savefig(f"Optimal Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, "
+                        f"disc_para={disc_para}")
+            plt.show()
+
         msg = input("Rerun? [Y/N] ")
-        # elif control == '2':
-        #     # Let computer be both the Player and Opponent, both sides apply their optimal strategy
-        #     fig3 = plt.figure(3)
-        #     for t in range(T+1):
-        #         if t == 0:
-        #             opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
-        #             opt_oppo_state = opt_oppo_action.state
-        #
-        #
-        # else:
-        #     print('Invalid game setting. Select again.')
-    # elif control == '2':
-    #
-    #
-    # else:
+
 
 
 
