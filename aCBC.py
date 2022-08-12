@@ -2,11 +2,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shapely import geometry
 from numpy.linalg import norm
+from random import *
 # plt.rcParams.update({
 #     "text.usetex": True,
 #     "font.family": "sans-serif",
 #     "font.sans-serif": ["Helvetica"]
 # })
+
+
+def convex_vertices_gen(num_nodes, T):
+    """
+    :type num_nodes: int
+    :type T: int
+    :return: vertex_list: dict
+    """
+    # coord_list = []
+    vertex_list = dict()
+    for t in range(T+1):
+        for node in range(1, num_nodes+1):
+            coord_list = []
+            # Generate vertex coordinates
+            while len(coord_list) <= 4:
+                sign = randint(-1, 1)
+                if sign != 0:
+                    coord_list.append(random() * 10 * sign)
+
+            print(len(coord_list))
+            print(coord_list)
+
+            vertex_list[f"t={t}, i={node}"] = \
+                [np.array([coord_list[0], coord_list[1]]), np.array([coord_list[2], coord_list[1]]),
+                 np.array([coord_list[2], coord_list[3]]), np.array([coord_list[0], coord_list[3]])]
+    return vertex_list
 
 
 # Treat Player state and Opponent state both in State class with different state.value
@@ -175,7 +202,7 @@ if __name__ == "__main__":
     colors = ['red', 'blue', 'green']
     line_style_list = ['-', '--', '-.']
     indx = 0
-    disc_para = 10   # Constant reach range for any x here. Done for simplicity.
+    disc_para = 5   # Constant reach range for any x here. Done for simplicity.
     num_nodes = 3
     # vertices_list = {
     #     "t=0, i=1": [np.array([1, 1]), np.array([2, 1]), np.array([2, 2]), np.array([1, 2])],
@@ -190,18 +217,21 @@ if __name__ == "__main__":
     # }
     # R = 8.5  # reach_range value (The value would vary depending on the given convex bodies)
 
-    vertices_list = {
-        "t=0, i=1": [np.array([8, 6]), np.array([10, 6]), np.array([10, 11]), np.array([8, 11])],
-        "t=0, i=2": [np.array([26, 20]), np.array([32, 20]), np.array([32, 24]), np.array([26, 24])],
-        "t=0, i=3": [np.array([9, 36]), np.array([11.5, 36]), np.array([11.5, 46]), np.array([9, 46])],
-        "t=1, i=1": [np.array([10, 25]), np.array([15, 25]), np.array([15, 30]), np.array([10, 30])],
-        "t=1, i=2": [np.array([34, 38]), np.array([36, 38]), np.array([36, 40]), np.array([34, 40])],
-        "t=1, i=3": [np.array([44, 8]), np.array([48, 8]), np.array([48, 12]), np.array([44, 12])],
-        "t=2, i=1": [np.array([14, 38]), np.array([22, 38]), np.array([22, 40]), np.array([14, 40])],
-        "t=2, i=2": [np.array([14, 2]), np.array([28, 2]), np.array([28, 6]), np.array([14, 6])],
-        "t=2, i=3": [np.array([45, 25]), np.array([50, 25]), np.array([50, 45]), np.array([45, 45])]
-    }
-    R = 36.7
+    # vertices_list = {
+    #     "t=0, i=1": [np.array([8, 6]), np.array([10, 6]), np.array([10, 11]), np.array([8, 11])],
+    #     "t=0, i=2": [np.array([26, 20]), np.array([32, 20]), np.array([32, 24]), np.array([26, 24])],
+    #     "t=0, i=3": [np.array([9, 36]), np.array([11.5, 36]), np.array([11.5, 46]), np.array([9, 46])],
+    #     "t=1, i=1": [np.array([10, 25]), np.array([15, 25]), np.array([15, 30]), np.array([10, 30])],
+    #     "t=1, i=2": [np.array([34, 38]), np.array([36, 38]), np.array([36, 40]), np.array([34, 40])],
+    #     "t=1, i=3": [np.array([44, 8]), np.array([48, 8]), np.array([48, 12]), np.array([44, 12])],
+    #     "t=2, i=1": [np.array([14, 38]), np.array([22, 38]), np.array([22, 40]), np.array([14, 40])],
+    #     "t=2, i=2": [np.array([14, 2]), np.array([28, 2]), np.array([28, 6]), np.array([14, 6])],
+    #     "t=2, i=3": [np.array([45, 25]), np.array([50, 25]), np.array([50, 45]), np.array([45, 45])]
+    # }
+    # R = 36.7
+
+    vertices_list = convex_vertices_gen(num_nodes, T)
+    R = 100     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid this issue
 
     # Find a way to save all value functions and optimal strategy approximation and discrete x's for testing purpose.
 
@@ -454,11 +484,20 @@ if __name__ == "__main__":
     ################################################ End Here ################################################
 
     ################################################ Display ################################################
-    # Let user be opponent, show player optimal action approximation for demo (Plot them)
-    # t = 0
+    # control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
+    # if control == '1':
+
+    t = 0
     msg = ''
     oppo_hist = dict()
+
+    # opt_player_action = None
+    # opt_player_state = None
+    # tot_cost = 0
     while msg.lower() != 'n':
+        # control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
+        # if control == '1':
+        # Let user be opponent, show player optimal action approximation for demo (Plot them)
         t = 0
         opt_player_action = None
         opt_player_state = None
@@ -548,6 +587,24 @@ if __name__ == "__main__":
         plt.savefig(f"Opponent History {oppo_hist['i0']}{oppo_hist['i1']}{oppo_hist['i2']}, disc_para={disc_para}")
         plt.show()
         msg = input("Rerun? [Y/N] ")
+        # elif control == '2':
+        #     # Let computer be both the Player and Opponent, both sides apply their optimal strategy
+        #     fig3 = plt.figure(3)
+        #     for t in range(T+1):
+        #         if t == 0:
+        #             opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
+        #             opt_oppo_state = opt_oppo_action.state
+        #
+        #
+        # else:
+        #     print('Invalid game setting. Select again.')
+    # elif control == '2':
+    #
+    #
+    # else:
+
+
+
 
     # plt.grid(True)
     # plt.axis('equal')
