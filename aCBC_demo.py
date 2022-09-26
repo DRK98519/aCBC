@@ -5,7 +5,7 @@ from numpy.linalg import norm
 from random import *
 
 
-def all_Q_plt(Q, node_num, color_set, line_style_set, T):
+def all_Q_plt(Q, node_num, color_set, line_style_set, T, plt_scale):
     """
     :param Q: dict
     :param node_num: int
@@ -583,6 +583,8 @@ if __name__ == "__main__":
                     print('Invalid agent side. ERROR')
                     break
             print(f"Is dummy_i in tree_queue? {dummy_i in tree_queue}")
+
+            full_tree = tree_queue[:]
             #################################### End ####################################
 
             #################################### Optimal Value Approximation ####################################
@@ -599,7 +601,7 @@ if __name__ == "__main__":
                 U_t(x_t-1, i_t-1) = max (V_t(x_t-1, i_t))
                 U_0 = max(V_0(i_0))
             """
-            full_tree = tree_queue[:]
+
             leaf_states = [state for state in tree_queue if state.t_step == T and state.side.lower() == 'player']
             print(f"Size of leaf_states: {len(leaf_states)}")
             print(f"Size of original tree_queue: {len(tree_queue)}")
@@ -716,6 +718,7 @@ if __name__ == "__main__":
                                                                   side='Opponent', value=opt_val,
                                                                   action=dummy_i.children_state_list[opt_indx])
             print("Optimal Value Approximation Done")
+
             #################################### End ####################################
 
             #################################### Display ####################################
@@ -730,7 +733,7 @@ if __name__ == "__main__":
             oppo_hist = dict()
 
             while msg.lower() != 'n':
-                all_Q_plt(Q, num_nodes, colors, line_style_list, T)
+                all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale)
                 ## Still need to add opt player vs. opt opponent
                 control = input("Opt Player vs. Opt Opponent [1] / Opt Player vs. Sub-opt Opponent [2] / Sub-opt "
                                 "Player vs. Opt Opponent [3]? ")
@@ -926,6 +929,7 @@ if __name__ == "__main__":
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     plt.show()
                 msg = input("Rerun? [Y/N] ")
+            #################################### Display ####################################
 
         elif method.lower() == 'old':
             ################################################ Discretization ############################################
