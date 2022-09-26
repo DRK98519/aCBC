@@ -60,7 +60,7 @@ def set_with_disc_x_plt(set, x_hat_list, color_set, line_style_set, i_t_val, t_v
         plt.title(r" $Q_{0}^{(i_0)}$ Discretization" + r" with $\delta_{X, 0} = $" +
                   fr"{delta_Xt}, $i_0 =$ {i_t_val}")
     else:
-        plt.title(r" $R(x_{t-1}) \cap Q_{t}^{(i_t)}$ Discretization" + r" with $\delta_{X, 0} = $" +
+        plt.title(r" $R(x_{t-1}) \cap Q_{t}^{(i_t)}$ Discretization" + r" with $\delta_{X, t} = $" +
                   fr"{delta_Xt}, $i_t =$ {i_t_val}, $t =${t_val}")
     ax = plt.gca()
     ax.set_aspect(1)
@@ -216,7 +216,7 @@ def coord_gen(set, delta_X_t, disc_para, bound_rmv):
         else:  # Set side is NOT big enough to use delta_X_t_ disc
             if sides[0] == sides[1]:
                 coord_h = np.linspace(bound_coord[0], bound_coord[2], disc_para)
-                coord_v = coord_h
+                coord_v = np.linspace(bound_coord[1], bound_coord[3], disc_para)
                 """
                 print(f"coord_h: {coord_h}")
                 print(f"coord_v: {coord_v}")
@@ -240,6 +240,7 @@ def coord_gen(set, delta_X_t, disc_para, bound_rmv):
         for coord in v_coord_copy:
             if coord in [bound_coord[1], bound_coord[3]]:
                 coord_v.remove(coord)
+
     return coord_h, coord_v
 
 
@@ -422,7 +423,7 @@ if __name__ == "__main__":
 
             Q = dict()
             hatX_coord = dict()
-            colors = ['green', 'blue', 'red']
+            colors = ['red', 'blue', 'green']
             line_style_list = ['-', '--', '-.']
 
             ## Compute all L_v_t (Value Function Lipschitz Constants)
@@ -482,7 +483,7 @@ if __name__ == "__main__":
                             state_queue.append(new_state)
 
                         # Display
-                        print(f'i_t_val={i_t_val}, t_val={t_val}, side={expanding_state.side}')
+                        print(f'i_{t_val}={i_t_val}, t_val={t_val}, side={expanding_state.side}')
 
                         if False:
                             set_with_disc_x_plt(Q0, disc_x_list, colors, line_style_list, i_t_val, t_val,
@@ -505,7 +506,7 @@ if __name__ == "__main__":
                             state_queue.append(new_state)
 
                         # Display
-                        print(f'x_t_minus_1_val={x_t_minus_1_val}, i_t_val={i_t_val}, t_val={t_val}, '
+                        print(f'x_{t_val-1}={x_t_minus_1_val}, i_{t_val}={i_t_val}, t_val={t_val}, '
                               f'side={expanding_state.side}')
 
                         if False:
@@ -521,6 +522,9 @@ if __name__ == "__main__":
                                               side='Opponent')
                             expanding_state.add_child_state(new_state)
                             state_queue.append(new_state)
+                    # Display
+                    print(f"x_{t_val}={expanding_state.state}, i_{t_val}={i_t_val}, t_val={t_val}, "
+                          f"side={expanding_state.side}")
                 else:
                     print('Invalid agent side. ERROR')
                     break
@@ -541,13 +545,13 @@ if __name__ == "__main__":
                 U_t(x_t-1, i_t-1) = max (V_t(x_t-1, i_t))
                 U_0 = max(V_0(i_0))
             """
+            full_tree = tree_queue[:]
             leaf_states = [state for state in tree_queue if state.t_step == T and state.side.lower() == 'player']
             print(f"Size of leaf_states: {len(leaf_states)}")
             print(f"Size of original tree_queue: {len(tree_queue)}")
 
             # Remove all leaf branches in tree
             tree_no_lf = [state for state in tree_queue if state.t_step != T or state.side.lower() != 'player']
-            tree_no_lf_copy = tree_no_lf[:]
             print(f"Size of updated tree_queue: {len(tree_no_lf)}")
 
             counter = 0
@@ -667,16 +671,6 @@ if __name__ == "__main__":
             IDEA: Separate game computation section (discretization, optimal value approximation) and game play section
             (display) as two different .py files
             """
-            # # Plot all given convex sets
-            # for t_val in range(T + 1):
-            #     for node in range(1, num_nodes + 1):
-            #         hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
-            #         plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=colors[t_val], edgecolor=colors[t_val],
-            #                  linewidth=2,
-            #                  linestyle=line_style_list[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
-            # plt.legend(fontsize=8)
-            # plt.grid(True)
-            # plt.axis(plt_scale)
 
             msg = ''
             oppo_hist = dict()
@@ -708,13 +702,13 @@ if __name__ == "__main__":
                                     """
                                     I want to make the repetitive codes as a reusable UDF to space lines
                                     disc_x0_solv_and_plt UDF???
-                                    Needed: tree_no_lf_copy, oppo_node, Q, colors, t, UV_dict 
+                                    Needed: full_tree, oppo_node, Q, colors, t, UV_dict 
                                     """
                                     # Find corresponding i0 State object in the tree
-                                    # oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node
+                                    # oppo_action = [action for action in full_tree if action.state == oppo_node
                                     # and action.t_step == t][0]
 
-                                    oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node and
+                                    oppo_action = [action for action in full_tree if action.state == oppo_node and
                                                    action.parent_state == prev_x_action][0]
 
                                     # Plot selected Q0
@@ -722,7 +716,7 @@ if __name__ == "__main__":
                                     set_plotter(Q0.region, colors[t], alpha_val=0.5)
 
                                     # Find disc x0 in Q0
-                                    disc_x_list = [action.state for action in tree_no_lf_copy if action.parent_state ==
+                                    disc_x_list = [action.state for action in full_tree if action.parent_state ==
                                                    oppo_action]
 
                                     # Plot disc x0 in Q0
@@ -748,7 +742,7 @@ if __name__ == "__main__":
                                 else:  # selected oppo_node is a reachable node
                                     oppo_hist[f"i{t}"] = oppo_node
 
-                                    oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node and
+                                    oppo_action = [action for action in full_tree if action.state == oppo_node and
                                                    action.parent_state == prev_x_action][0]
 
                                     # Plot selected Qt
@@ -761,7 +755,7 @@ if __name__ == "__main__":
                                     set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
 
                                     # Find disc xt in R(previous_x) intersect Qt
-                                    disc_x_list = [action.state for action in tree_no_lf_copy if action.parent_state ==
+                                    disc_x_list = [action.state for action in full_tree if action.parent_state ==
                                                    oppo_action]
 
                                     # Plot disc xt in R(previous_x) intersect Qt
@@ -777,11 +771,20 @@ if __name__ == "__main__":
                                     plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
                                                 marker='.')
 
+                                    # Connect optimal x_t state approximation to prev_x_state
+                                    plt.plot([prev_x_state[0], opt_player_state[0]],
+                                             [prev_x_state[1], opt_player_state[1]], color='black')
+
+                                    # Update cost
+                                    tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
                                     # Display
                                     print(f"Optimal Player State Approximation: {opt_player_state}")
+                                    print(f"Cost: {tot_cost}")
 
                                     t += 1
-
+                        plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                                  fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
+                                  fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     else:  # Case of Player (PC) vs. Opponent (User)
                         pass  # Need plot code
                     plt.show()
@@ -803,19 +806,40 @@ if __name__ == "__main__":
             # Number of discrete points on the sides. Made the same for horizontal and vertical for simplicity
             disc_para = 5
             num_nodes = 3
+            # vertices_list = {
+            #     "t=0, i=1": [np.array([1, 1]), np.array([2, 1]), np.array([2, 2]), np.array([1, 2])],
+            #     "t=0, i=2": [np.array([3, 3]), np.array([3, 2]), np.array([5, 2]), np.array([5, 3])],
+            #     "t=0, i=3": [np.array([4, 7]), np.array([4, 4]), np.array([5, 4]), np.array([5, 7])],
+            #     "t=1, i=1": [np.array([8, 3]), np.array([8, 1]), np.array([11, 1]), np.array([11, 3])],
+            #     "t=1, i=2": [np.array([12, 6]), np.array([12, 3]), np.array([14, 3]), np.array([14, 6])],
+            #     "t=1, i=3": [np.array([7, 6]), np.array([7, 4]), np.array([9, 4]), np.array([9, 6])],
+            #     "t=2, i=1": [np.array([10, 6]), np.array([10, 5]), np.array([11, 5]), np.array([11, 6])],
+            #     "t=2, i=2": [np.array([6, 10]), np.array([6, 7]), np.array([11, 7]), np.array([11, 10])],
+            #     "t=2, i=3": [np.array([12, 10]), np.array([12, 8]), np.array([14, 8]), np.array([14, 10])]
+            # }
+            # R = 8.5  # reach_range value (The value would vary depending on the given convex bodies)
             vertices_list = {
-                "t=0, i=1": [np.array([1, 1]), np.array([2, 1]), np.array([2, 2]), np.array([1, 2])],
-                "t=0, i=2": [np.array([3, 3]), np.array([3, 2]), np.array([5, 2]), np.array([5, 3])],
-                "t=0, i=3": [np.array([4, 7]), np.array([4, 4]), np.array([5, 4]), np.array([5, 7])],
-                "t=1, i=1": [np.array([8, 3]), np.array([8, 1]), np.array([11, 1]), np.array([11, 3])],
-                "t=1, i=2": [np.array([12, 6]), np.array([12, 3]), np.array([14, 3]), np.array([14, 6])],
-                "t=1, i=3": [np.array([7, 6]), np.array([7, 4]), np.array([9, 4]), np.array([9, 6])],
-                "t=2, i=1": [np.array([10, 6]), np.array([10, 5]), np.array([11, 5]), np.array([11, 6])],
-                "t=2, i=2": [np.array([6, 10]), np.array([6, 7]), np.array([11, 7]), np.array([11, 10])],
-                "t=2, i=3": [np.array([12, 10]), np.array([12, 8]), np.array([14, 8]), np.array([14, 10])]
+                # "t=0, i=1": [np.array([1/50, 1/50]), np.array([2/50, 1/50]), np.array([2/50, 2/50]), np.array([1/50, 2/50])],
+                "t=0, i=1": [np.array([1 / 15, 1 / 15]), np.array([2 / 15, 1 / 15]), np.array([2 / 15, 2 / 15]),
+                             np.array([1 / 15, 2 / 15])],
+                "t=0, i=2": [np.array([3 / 15, 3 / 15]), np.array([3 / 15, 2 / 15]), np.array([5 / 15, 2 / 15]),
+                             np.array([5 / 15, 3 / 15])],
+                "t=0, i=3": [np.array([4 / 15, 7 / 15]), np.array([4 / 15, 4 / 15]), np.array([5 / 15, 4 / 15]),
+                             np.array([5 / 15, 7 / 15])],
+                "t=1, i=1": [np.array([8 / 15, 3 / 15]), np.array([8 / 15, 1 / 15]), np.array([11 / 15, 1 / 15]),
+                             np.array([11 / 15, 3 / 15])],
+                "t=1, i=2": [np.array([12 / 15, 6 / 15]), np.array([12 / 15, 3 / 15]), np.array([14 / 15, 3 / 15]),
+                             np.array([14 / 15, 6 / 15])],
+                "t=1, i=3": [np.array([7 / 15, 6 / 15]), np.array([7 / 15, 4 / 15]), np.array([9 / 15, 4 / 15]),
+                             np.array([9 / 15, 6 / 15])],
+                "t=2, i=1": [np.array([10 / 15, 6 / 15]), np.array([10 / 15, 5 / 15]), np.array([11 / 15, 5 / 15]),
+                             np.array([11 / 15, 6 / 15])],
+                "t=2, i=2": [np.array([6 / 15, 10 / 15]), np.array([6 / 15, 7 / 15]), np.array([11 / 15, 7 / 15]),
+                             np.array([11 / 15, 10 / 15])],
+                "t=2, i=3": [np.array([12 / 15, 10 / 15]), np.array([12 / 15, 8 / 15]), np.array([14 / 15, 8 / 15]),
+                             np.array([14 / 15, 10 / 15])]
             }
-            R = 8.5  # reach_range value (The value would vary depending on the given convex bodies)
-
+            R = 1
             # vertices_list = {
             #     "t=0, i=1": [np.array([8, 6]), np.array([10, 6]), np.array([10, 11]), np.array([8, 11])],
             #     "t=0, i=2": [np.array([26, 20]), np.array([32, 20]), np.array([32, 24]), np.array([26, 24])],
@@ -830,7 +854,7 @@ if __name__ == "__main__":
             # R = 36.7
 
             # scale_para = 100
-            scale_para = 15
+            scale_para = 1
             plt_scale = [0, scale_para, 0, scale_para]
             # vertices_list = convex_vertices_gen(num_nodes, T, scale_para)
             # R = 2 * scale_para     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid this issue
