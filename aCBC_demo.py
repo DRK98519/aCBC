@@ -26,6 +26,7 @@ def all_Q_plt(Q, node_num, color_set, line_style_set, T):
     plt.axis(plt_scale)
     return None
 
+
 def value_approx_display(state_1, state_2, value_obj, counter):
     """
     :param state_1: State
@@ -77,6 +78,51 @@ def set_plotter(set, plt_color, alpha_val):
     """
     hcoord, vcoord = set.exterior.xy
     plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
+
+
+def game_plt(tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R):
+    """
+    :param tree: list
+    :param oppo_action: State
+    :param Q: dict
+    :param colors: list
+    :param UV_dict: dict
+    :param t: int
+    :param prev_x_action: State
+    :param R: float
+    :return: opt_player_action: State
+    """
+    prev_x_state = prev_x_action.state
+    # Plot selected Qt
+    Qt = Q[f"Q_t={t}^i={oppo_action.state}"].region
+    set_plotter(Qt, colors[t], alpha_val=0.25)
+
+    # Plot the set discretized over
+    if t == 0:
+        set = Qt
+    else:
+        R_set = reach_set_calc(prev_x_action.state, R)
+        set = Qt.intersection(R_set)
+    set_plotter(set, colors[t], alpha_val=0.5)
+
+    # Find disc xt in the set
+    disc_x_list = [action.state for action in tree if action.parent_state == oppo_action]
+
+    # Plot disc xt in the set
+    for disc_x in disc_x_list:
+        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
+
+    # Find optimal player action xt
+    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
+    opt_player_state = opt_player_action.state
+
+    # Plot optimal xt in the set
+    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1, marker='.')
+
+    if t != 0:
+        # Connect optimal xt state approximation to prev_x_state
+        plt.plot([prev_x_state[0], opt_player_state[0]], [prev_x_state[1], opt_player_state[1]], color='black')
+    return opt_player_action
 
 
 def convex_vertices_gen(num_nodes, T, region_para):
@@ -711,26 +757,31 @@ if __name__ == "__main__":
                                     oppo_action = [action for action in full_tree if action.state == oppo_node and
                                                    action.parent_state == prev_x_action][0]
 
-                                    # Plot selected Q0
-                                    Q0 = Q[f"Q_t={t}^i={oppo_node}"]
-                                    set_plotter(Q0.region, colors[t], alpha_val=0.5)
-
-                                    # Find disc x0 in Q0
-                                    disc_x_list = [action.state for action in full_tree if action.parent_state ==
-                                                   oppo_action]
-
-                                    # Plot disc x0 in Q0
-                                    for disc_x in disc_x_list:
-                                        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
-
-                                    # Find optimal player action x0 (Can be made UDF)
-                                    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, "
-                                                                f"{oppo_action.state})"].action
+                                    # Plot the game process
+                                    opt_player_action = game_plt(full_tree, oppo_action, Q, colors, UV_dict, t,
+                                                                 prev_x_action, R)
                                     opt_player_state = opt_player_action.state
-
-                                    # Plot optimal x0 in Q0
-                                    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
-                                                marker='.')
+                                    # # Plot selected Q0
+                                    # Q0 = Q[f"Q_t={t}^i={oppo_action.state}"].region
+                                    # set_plotter(Q0, colors[t], alpha_val=0.25)
+                                    # set_plotter(Q0, colors[t], alpha_val=0.5)
+                                    #
+                                    # # Find disc x0 in Q0
+                                    # disc_x_list = [action.state for action in full_tree if action.parent_state ==
+                                    #                oppo_action]
+                                    #
+                                    # # Plot disc x0 in Q0
+                                    # for disc_x in disc_x_list:
+                                    #     plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
+                                    #
+                                    # # Find optimal player action x0 (Can be made UDF)
+                                    # opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, "
+                                    #                             f"{oppo_action.state})"].action
+                                    # opt_player_state = opt_player_action.state
+                                    #
+                                    # # Plot optimal x0 in Q0
+                                    # plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
+                                    #             marker='.')
                                     t += 1  # Update t value
 
                                     # Display
@@ -745,47 +796,52 @@ if __name__ == "__main__":
                                     oppo_action = [action for action in full_tree if action.state == oppo_node and
                                                    action.parent_state == prev_x_action][0]
 
-                                    # Plot selected Qt
-                                    Qt = Q[f"Q_t={t}^i={oppo_node}"]
-                                    set_plotter(Qt.region, colors[t], alpha_val=0.25)
-
-                                    # Plot R(previous_x) intersect Qt
-                                    R_set = reach_set_calc(prev_x_state, R)
-                                    R_intersect_Q = Qt.region.intersection(R_set)
-                                    set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
-
-                                    # Find disc xt in R(previous_x) intersect Qt
-                                    disc_x_list = [action.state for action in full_tree if action.parent_state ==
-                                                   oppo_action]
-
-                                    # Plot disc xt in R(previous_x) intersect Qt
-                                    for disc_x in disc_x_list:
-                                        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
-
-                                    # Find optimal player action xt in R(previous_x) intersect Qt
-                                    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state}" 
-                                                                f")"].action
+                                    # Plot the game process
+                                    opt_player_action = game_plt(full_tree, oppo_action, Q, colors, UV_dict, t,
+                                                                 prev_x_action, R)
                                     opt_player_state = opt_player_action.state
-
-                                    # Plot optimal x_0 in R(previous_x) intersect Qt
-                                    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
-                                                marker='.')
-
-                                    # Connect optimal x_t state approximation to prev_x_state
-                                    plt.plot([prev_x_state[0], opt_player_state[0]],
-                                             [prev_x_state[1], opt_player_state[1]], color='black')
+                                    # # Plot selected Qt
+                                    # Qt = Q[f"Q_t={t}^i={oppo_action.state}"].region
+                                    # set_plotter(Qt, colors[t], alpha_val=0.25)
+                                    #
+                                    # # Plot R(previous_x) intersect Qt
+                                    # R_set = reach_set_calc(prev_x_state, R)
+                                    # R_intersect_Q = Qt.intersection(R_set)
+                                    # set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
+                                    #
+                                    # # Find disc xt in R(previous_x) intersect Qt
+                                    # disc_x_list = [action.state for action in full_tree if action.parent_state ==
+                                    #                oppo_action]
+                                    #
+                                    # # Plot disc xt in R(previous_x) intersect Qt
+                                    # for disc_x in disc_x_list:
+                                    #     plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
+                                    #
+                                    # # Find optimal player action xt in R(previous_x) intersect Qt
+                                    # opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state}"
+                                    #                             f")"].action
+                                    # opt_player_state = opt_player_action.state
+                                    #
+                                    # # Plot optimal x_t in R(previous_x) intersect Qt
+                                    # plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
+                                    #             marker='.')
+                                    #
+                                    # # Connect optimal x_t state approximation to prev_x_state
+                                    # plt.plot([prev_x_state[0], opt_player_state[0]],
+                                    #          [prev_x_state[1], opt_player_state[1]], color='black')
 
                                     # Update cost
                                     tot_cost += norm(np.array(prev_x_state) - np.array(opt_player_state), 2)
+                                    t += 1  # Update t value
+
                                     # Display
                                     print(f"Optimal Player State Approximation: {opt_player_state}")
                                     print(f"Cost: {tot_cost}")
 
-                                    t += 1
                         plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
                                   fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
-                    else:  # Case of Player (PC) vs. Opponent (User)
+                    else:  # Case of Player (PC) vs. Opponent (PC)
                         pass  # Need plot code
                     plt.show()
                 msg = input("Rerun? [Y/N] ")
