@@ -462,6 +462,8 @@ if __name__ == "__main__":
                              np.array([11 / 15, 6 / 15])],
                 "t=2, i=2": [np.array([6 / 15, 10 / 15]), np.array([6 / 15, 7 / 15]), np.array([11 / 15, 7 / 15]),
                              np.array([11 / 15, 10 / 15])],
+                # "t=2, i=3": [np.array([10 / 15 - 0.1, 6 / 15]), np.array([10 / 15 - 0.1, 5 / 15]), np.array([11 / 15 - 0.1, 5 / 15]),
+                #              np.array([11 / 15 - 0.1, 6 / 15])]
                 "t=2, i=3": [np.array([12 / 15, 10 / 15]), np.array([12 / 15, 8 / 15]), np.array([14 / 15, 8 / 15]),
                              np.array([14 / 15, 10 / 15])]
             }
@@ -758,7 +760,7 @@ if __name__ == "__main__":
 
                                     # Plot the game process
                                     opt_player_action = game_plt(full_tree, oppo_action, Q, colors, UV_dict, t,
-                                                                 prev_x_action, R)
+                                                                 prev_x_action, R, control)
                                     opt_player_state = opt_player_action.state
                                     # # Plot selected Q0
                                     # Q0 = Q[f"Q_t={t}^i={oppo_action.state}"].region
@@ -797,7 +799,7 @@ if __name__ == "__main__":
 
                                     # Plot the game process
                                     opt_player_action = game_plt(full_tree, oppo_action, Q, colors, UV_dict, t,
-                                                                 prev_x_action, R)
+                                                                 prev_x_action, R, control)
                                     opt_player_state = opt_player_action.state
                                     # # Plot selected Qt
                                     # Qt = Q[f"Q_t={t}^i={oppo_action.state}"].region
