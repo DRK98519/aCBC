@@ -723,16 +723,17 @@ if __name__ == "__main__":
 
             while msg.lower() != 'n':
                 all_Q_plt(Q, num_nodes, colors, line_style_list, T)
+                ## Still need to add opt player vs. opt opponent
                 control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
                 if control not in ['1', '2']:
                     print('Invalid game setting. Select again.')
                 else:  # Valid game setting
+                    tot_cost = 0
                     if control == '2':  # Case of Player (PC) vs. Opponent (User)
                         # Initialize the game
                         t = 0
                         opt_player_action = dummy_i
                         opt_player_state = dummy_i.state
-                        tot_cost = 0
 
                         while t <= T:
                             prev_x_action = opt_player_action
@@ -744,15 +745,6 @@ if __name__ == "__main__":
                                     print("Invalid selection of node. Try again.")
                                 else:  # oppo_node is valid with given graph
                                     oppo_hist[f"i{t}"] = oppo_node  # Store selected oppo_node to oppo_hist
-
-                                    """
-                                    I want to make the repetitive codes as a reusable UDF to space lines
-                                    disc_x0_solv_and_plt UDF???
-                                    Needed: full_tree, oppo_node, Q, colors, t, UV_dict 
-                                    """
-                                    # Find corresponding i0 State object in the tree
-                                    # oppo_action = [action for action in full_tree if action.state == oppo_node
-                                    # and action.t_step == t][0]
 
                                     oppo_action = [action for action in full_tree if action.state == oppo_node and
                                                    action.parent_state == prev_x_action][0]
@@ -838,15 +830,26 @@ if __name__ == "__main__":
                                     print(f"Optimal Player State Approximation: {opt_player_state}")
                                     print(f"Cost: {tot_cost}")
 
-                        plt.title(fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                        plt.title(fr"Sub-optimal Opponent vs. Optimal Player " + '\n' +
+                                  fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
                                   fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
-                    else:  # Case of Player (PC) vs. Opponent (PC)
+                    elif control == '1':  # Case of Player (PC) vs. Opponent (PC)
+                        opt_oppo_action = dummy_i
+                        prev_x_action = opt_oppo_action.parent_state
+
+                        for t in range(T+1):
+                            if t == 0:
+                                opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
+
+                                ### Need to check line 846 - 848 correctness!!!! Continue Here
+                                opt_player_action = game_plt(full_tree, oppo_action, Q, colors, UV_dict, t,
+                                                             prev_x_action, R)
+                                opt_player_state = opt_player_action.state
+
                         pass  # Need plot code
                     plt.show()
                 msg = input("Rerun? [Y/N] ")
-
-            ## Continue Here!!!
 
         elif method.lower() == 'old':
             ################################################ Discretization ############################################
@@ -1312,8 +1315,8 @@ if __name__ == "__main__":
                         # plt.show()
 
                     elif control == '1':
-                        prev_x_action = dummy_i
                         opt_oppo_action = dummy_i
+                        prev_x_action = opt_oppo_action.parent_state
                         tot_cost = 0
                         # oppo_hist = dict()
                         for t in range(T + 1):
@@ -1322,10 +1325,13 @@ if __name__ == "__main__":
                                 opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
                                 # Plot Q0
                                 Q0 = Q[f'Q_t={t}^i={opt_oppo_action.state}']
+                                set_plotter(Q0.region, colors[t], alpha_val=0.25)
                                 set_plotter(Q0.region, colors[t], alpha_val=0.5)
 
                                 # Find discrete x0 in Q0
-                                disc_x_list = discrete_x_calc(Q0.region, disc_para, bound_rmv=boundary_rmv)
+                                disc_x_list = [action.state for action in value_eval_queue1 if action.parent_state ==
+                                               opt_oppo_action]
+                                # disc_x_list = discrete_x_calc(Q0.region, disc_para, bound_rmv=boundary_rmv)
 
                                 # # Output message
                                 # print(f"\nt={t}")
