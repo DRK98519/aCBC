@@ -423,43 +423,83 @@ if __name__ == "__main__":
     num_nodes = 3  # Number of nodes in graph
     scale_para = 1  # State space X region
     plt_scale = [0, scale_para, 0, scale_para]
-    vertices_list = {
-        # "t=0, i=1": [np.array([1/50, 1/50]), np.array([2/50, 1/50]), np.array([2/50, 2/50]), np.array([1/50, 2/50])],
-        "t=0, i=1": [np.array([1 / 15, 1 / 15]), np.array([2 / 15, 1 / 15]), np.array([2 / 15, 2 / 15]),
-                     np.array([1 / 15, 2 / 15])],
-        "t=0, i=2": [np.array([3 / 15, 3 / 15]), np.array([3 / 15, 2 / 15]), np.array([5 / 15, 2 / 15]),
-                     np.array([5 / 15, 3 / 15])],
-        "t=0, i=3": [np.array([4 / 15, 7 / 15]), np.array([4 / 15, 4 / 15]), np.array([5 / 15, 4 / 15]),
-                     np.array([5 / 15, 7 / 15])],
-        "t=1, i=1": [np.array([8 / 15, 3 / 15]), np.array([8 / 15, 1 / 15]), np.array([11 / 15, 1 / 15]),
-                     np.array([11 / 15, 3 / 15])],
-        "t=1, i=2": [np.array([12 / 15, 6 / 15]), np.array([12 / 15, 3 / 15]), np.array([14 / 15, 3 / 15]),
-                     np.array([14 / 15, 6 / 15])],
-        "t=1, i=3": [np.array([7 / 15, 6 / 15]), np.array([7 / 15, 4 / 15]), np.array([9 / 15, 4 / 15]),
-                     np.array([9 / 15, 6 / 15])],
-        "t=2, i=1": [np.array([10 / 15, 6 / 15]), np.array([10 / 15, 5 / 15]), np.array([11 / 15, 5 / 15]),
-                     np.array([11 / 15, 6 / 15])],
-        "t=2, i=2": [np.array([6 / 15, 10 / 15]), np.array([6 / 15, 7 / 15]), np.array([11 / 15, 7 / 15]),
-                     np.array([11 / 15, 10 / 15])],
-        # "t=2, i=3": [np.array([10 / 15 - 0.1, 6 / 15]), np.array([10 / 15 - 0.1, 5 / 15]), np.array([11 / 15 - 0.1, 5 / 15]),
-        #              np.array([11 / 15 - 0.1, 6 / 15])]
-        "t=2, i=3": [np.array([12 / 15, 10 / 15]), np.array([12 / 15, 8 / 15]), np.array([14 / 15, 8 / 15]),
-                     np.array([14 / 15, 10 / 15])]
-    }
+    # vertices_list = {
+    #     "t=0, i=1": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=0, i=2": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=0, i=3": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=1, i=1": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=1, i=2": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=1, i=3": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=2, i=1": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=2, i=2": [np.array(), np.array(), np.array(), np.array()],
+    #     "t=2, i=3": [np.array(), np.array(), np.array(), np.array()]
+    # }
+    # vertices_list = {
+    #     # "t=0, i=1": [np.array([1/50, 1/50]), np.array([2/50, 1/50]), np.array([2/50, 2/50]), np.array([1/50, 2/50])],
+    #     "t=0, i=1": [np.array([1 / 15, 1 / 15]), np.array([2 / 15, 1 / 15]), np.array([2 / 15, 2 / 15]),
+    #                  np.array([1 / 15, 2 / 15])],
+    #     "t=0, i=2": [np.array([3 / 15, 3 / 15]), np.array([3 / 15, 2 / 15]), np.array([5 / 15, 2 / 15]),
+    #                  np.array([5 / 15, 3 / 15])],
+    #     "t=0, i=3": [np.array([4 / 15, 7 / 15]), np.array([4 / 15, 4 / 15]), np.array([5 / 15, 4 / 15]),
+    #                  np.array([5 / 15, 7 / 15])],
+    #     "t=1, i=1": [np.array([8 / 15, 3 / 15]), np.array([8 / 15, 1 / 15]), np.array([11 / 15, 1 / 15]),
+    #                  np.array([11 / 15, 3 / 15])],
+    #     "t=1, i=2": [np.array([12 / 15, 6 / 15]), np.array([12 / 15, 3 / 15]), np.array([14 / 15, 3 / 15]),
+    #                  np.array([14 / 15, 6 / 15])],
+    #     "t=1, i=3": [np.array([7 / 15, 6 / 15]), np.array([7 / 15, 4 / 15]), np.array([9 / 15, 4 / 15]),
+    #                  np.array([9 / 15, 6 / 15])],
+    #     "t=2, i=1": [np.array([10 / 15, 6 / 15]), np.array([10 / 15, 5 / 15]), np.array([11 / 15, 5 / 15]),
+    #                  np.array([11 / 15, 6 / 15])],
+    #     "t=2, i=2": [np.array([6 / 15, 10 / 15]), np.array([6 / 15, 7 / 15]), np.array([11 / 15, 7 / 15]),
+    #                  np.array([11 / 15, 10 / 15])],
+    #     # "t=2, i=3": [np.array([10 / 15 - 0.1, 6 / 15]), np.array([10 / 15 - 0.1, 5 / 15]), np.array([11 / 15 - 0.1, 5 / 15]),
+    #     #              np.array([11 / 15 - 0.1, 6 / 15])]
+    #     "t=2, i=3": [np.array([12 / 15, 10 / 15]), np.array([12 / 15, 8 / 15]), np.array([14 / 15, 8 / 15]),
+    #                  np.array([14 / 15, 10 / 15])]
+    # }
     R = 1  # reach_range value (The value would vary depending on the given convex bodies)
     T = 2  # Finite horizon
+    ratio = 1   # Expand or compress ratio for convex sets
 
+    vertices_list = {
+        "t=0, i=1": [val / ratio for val in [np.array([0.2, 0.3]), np.array([0.4, 0.3]), np.array([0.4, 0.65]),
+                                             np.array([0.2, 0.65])]],
+        "t=0, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.8, 0.3]), np.array([0.8, 0.5]),
+                                             np.array([0.3, 0.5])]],
+        "t=0, i=3": [val / ratio for val in [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.86]),
+                                             np.array([0.25, 0.86])]],
+        "t=1, i=1": [val / ratio for val in [np.array([0.35, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 0.]),
+                                             np.array([0.2, 0.7])]],
+        "t=1, i=2": [val / ratio for val in [np.array([0.2, 0.1]), np.array([0.4, 0.1]), np.array([0.4, 0.5]),
+                                             np.array([0.2, 0.5])]],
+        "t=1, i=3": [val / ratio for val in [np.array([0.33, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]),
+                                             np.array([0.33, 0.8])]],
+        "t=2, i=1": [val / ratio for val in [np.array([0.28, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.66]),
+                                             np.array([0.28, 0.66])]],
+        "t=2, i=2": [val / ratio for val in [np.array([0.25, 0.132]), np.array([0.6, 0.132]), np.array([0.6, 0.75]),
+                                             np.array([0.25, 0.75])]],
+        "t=2, i=3": [val / ratio for val in [np.array([0.35, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.72]),
+                                             np.array([0.35, 0.72])]]
+    }
     # vertices_list = {
-    #     "t=0, i=1": [np.array([0.15, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.8]),
-    #                  np.array([0.15, 0.8])],
-    #     "t=0, i=2": [np.array([0.2, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 1]), np.array([0.2, 1])],
-    #     "t=0, i=3": [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.8]), np.array([0.25, 0.8])],
-    #     "t=1, i=1": [np.array([0.2, 0.3]), np.array([0.45, 0.3]), np.array([0.45, 0.7]), np.array([0.2, 0.7])],
-    #     "t=1, i=2": [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.9]), np.array([0.25, 0.9])],
-    #     "t=1, i=3": [np.array([0.3, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]), np.array([0.3, 0.8])],
-    #     "t=2, i=1": [np.array([0.3, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.7]), np.array([0.3, 0.7])],
-    #     "t=2, i=2": [np.array([0.25, 0.1]), np.array([0.6, 0.1]), np.array([0.6, 0.8]), np.array([0.25, 0.8])],
-    #     "t=2, i=3": [np.array([0.3, 0]), np.array([0.45, 0]), np.array([0.45, 0.7]), np.array([0.3, 0.7])]
+    #     "t=0, i=1": [val/ratio for val in [np.array([0.15, 0.13]), np.array([0.4, 0.13]), np.array([0.4, 0.77]),
+    #                                        np.array([0.15, 0.77])]],
+    #     "t=0, i=2": [val/ratio for val in [np.array([0.22, 0.33]), np.array([0.48, 0.33]), np.array([0.48, 0.83]),
+    #                                        np.array([0.22, 0.83])]],
+    #     "t=0, i=3": [val/ratio for val in [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.86]),
+    #                                        np.array([0.25, 0.86])]],
+    #     "t=1, i=1": [val/ratio for val in [np.array([0.2, 0.3]), np.array([0.45, 0.3]), np.array([0.45, 0.7]),
+    #                                        np.array([0.2, 0.7])]],
+    #     "t=1, i=2": [val/ratio for val in [np.array([0.27, 0.18]), np.array([0.53, 0.18]), np.array([0.53, 0.9]),
+    #                                        np.array([0.27, 0.9])]],
+    #     "t=1, i=3": [val/ratio for val in [np.array([0.33, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]),
+    #                                        np.array([0.33, 0.8])]],
+    #     "t=2, i=1": [val/ratio for val in [np.array([0.28, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.66]),
+    #                                        np.array([0.28, 0.66])]],
+    #     "t=2, i=2": [val/ratio for val in [np.array([0.25, 0.132]), np.array([0.6, 0.132]), np.array([0.6, 0.75]),
+    #                                        np.array([0.25, 0.75])]],
+    #     "t=2, i=3": [val/ratio for val in [np.array([0.35, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.72]),
+    #                                        np.array([0.35, 0.72])]]
     # }
     # vertices_list = convex_vertices_gen(num_nodes, T, scale_para)
     # R = 2 * scale_para     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid
@@ -745,7 +785,7 @@ if __name__ == "__main__":
                 'R': R,
                 'method': method
             }
-            tree_file = open(f'tree_info_new (epsilon = {performance_bound}, extra_disc_para = {extra_disc_para}', 'wb')
+            tree_file = open(f'tree_info_new (epsilon = {performance_bound}, extra_disc_para = {extra_disc_para})', 'wb')
             pickle.dump(tree_info, tree_file)
             tree_file.close()
 

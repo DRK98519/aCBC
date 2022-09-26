@@ -36,8 +36,11 @@ def all_Q_plt(Q, node_num, color_set, line_style_set, T, plt_scale):
     for t_val in range(T + 1):
         for node in range(1, node_num + 1):
             hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
-            plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=color_set[t_val], edgecolor=color_set[t_val],
-                     linewidth=2,
+            # plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=color_set[t_val], edgecolor=color_set[t_val],
+            #          linewidth=2,
+            #          linestyle=line_style_set[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
+            plt.fill(hcoord_q, vcoord_q, alpha=1, facecolor='none', edgecolor=color_set[t_val],
+                     linewidth=1.5,
                      linestyle=line_style_set[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
     plt.legend(fontsize=8)
     plt.grid(True)
@@ -53,7 +56,8 @@ def set_plotter(set, plt_color, alpha_val):
     :return: None
     """
     hcoord, vcoord = set.exterior.xy
-    plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
+    # plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
+    plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor='none', edgecolor=plt_color)
 
 
 def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, control):
@@ -71,7 +75,7 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
     prev_x_state = prev_x_action.state
     # Plot selected Qt
     Qt = Q[f"Q_t={t}^i={oppo_action.state}"].region
-    set_plotter(Qt, colors[t], alpha_val=0.25)
+    set_plotter(Qt, colors[t], alpha_val=0.05)
 
     # Plot the set discretized over
     if t == 0:
@@ -79,14 +83,14 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
     else:
         R_set = reach_set_calc(prev_x_action.state, R)
         set = Qt.intersection(R_set)
-    set_plotter(set, colors[t], alpha_val=0.5)
+    set_plotter(set, colors[t], alpha_val=0.1)
 
     # Find disc xt in the set
     disc_x_list = [action.state for action in full_tree if action.parent_state == oppo_action]
 
     # Plot disc xt in the set
-    for disc_x in disc_x_list:
-        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
+    # for disc_x in disc_x_list:
+    #     plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
 
     if control in ['1', '2']:   # Opt pl vs. Opt op or Opt pl vs. Sub-opt op
         # Find optimal player action xt
@@ -203,7 +207,7 @@ if __name__ == "__main__":
         if method.lower() == 'new':
 
             # Load tree info new files into the program
-            tree_file = open(f'tree_info_new (epsilon = {0.1}, extra_disc_para = {5})', 'rb')
+            tree_file = open(f'tree_info_new (epsilon = {0.5}, extra_disc_para = {5})', 'rb')
             tree_info = pickle.load(tree_file)
             tree_file.close()
 
@@ -225,9 +229,9 @@ if __name__ == "__main__":
 
             msg = ''
             oppo_hist = dict()
-            tot_cost = 0
 
             while msg.lower() != 'n':
+                tot_cost = 0
                 all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale)
                 ## Still need to add opt player vs. opt opponent
                 control = input("Opt Player vs. Opt Opponent [1] / Opt Player vs. Sub-opt Opponent [2] / Sub-opt "
@@ -426,18 +430,22 @@ if __name__ == "__main__":
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     plt.show()
                 msg = input(f"Rerun (Method: {method})? [Y/N] ")
+
+                # Save Simulation Results
+                sim_result = {
+                    'tot_cost': tot_cost,
+                    'performance_bound': performance_bound,
+                    'extra_disc_para': extra_disc_para
+                }
+                sim_file = open(f'sim_result_new (epsilon = {performance_bound}, extra_disc_para = {extra_disc_para})',
+                                'ab')
+                pickle.dump(sim_result, sim_file)
+                sim_file.close()
+            #################################### End Here ####################################
+
             #################################### Display ####################################
-            # Save Simulation Results
-            sim_result = {
-                'tot_cost': tot_cost,
-                'performance_bound': performance_bound,
-                'extra_disc_para':  extra_disc_para
-            }
-            sim_file = open('sim_result_new', 'ab')
-
-
         elif method.lower() == 'old':
-
+            tot_cost = 0
             # Load tree info old files into the program
             tree_file = open('tree_info_old', 'rb')
             tree_info = pickle.load(tree_file)
