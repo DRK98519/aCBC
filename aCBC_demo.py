@@ -80,7 +80,7 @@ def set_plotter(set, plt_color, alpha_val):
     plt.fill(hcoord, vcoord, alpha=alpha_val, facecolor=plt_color, edgecolor=plt_color)
 
 
-def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R):
+def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, control):
     """
     :param full_tree: list
     :param oppo_action: State
@@ -90,7 +90,7 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R):
     :param t: int
     :param prev_x_action: State
     :param R: float
-    :return: opt_player_action: State
+    :return: player_action: State
     """
     prev_x_state = prev_x_action.state
     # Plot selected Qt
@@ -112,17 +112,23 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R):
     for disc_x in disc_x_list:
         plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
 
-    # Find optimal player action xt
-    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
-    opt_player_state = opt_player_action.state
+    if control in ['1', '2']:   # Opt pl vs. Opt op or Opt pl vs. Sub-opt op
+        # Find optimal player action xt
+        player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state})"].action
+        player_state = player_action.state
+
+    else:   # Control == '3', Sub-opt pl vs. Opt op
+        # Randomly pick player action xt
+        player_action = choice([action for action in full_tree if action.parent_state == oppo_action])
+        player_state = player_action.state
 
     # Plot optimal xt in the set
-    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1, marker='.')
+    plt.scatter(player_state[0], player_state[1], color='black', linewidths=0.1, marker='.')
 
     if t != 0:
         # Connect optimal xt state approximation to prev_x_state
-        plt.plot([prev_x_state[0], opt_player_state[0]], [prev_x_state[1], opt_player_state[1]], color='black')
-    return opt_player_action
+        plt.plot([prev_x_state[0], player_state[0]], [prev_x_state[1], player_state[1]], color='black')
+    return player_action
 
 
 def convex_vertices_gen(num_nodes, T, region_para):
@@ -724,8 +730,9 @@ if __name__ == "__main__":
             while msg.lower() != 'n':
                 all_Q_plt(Q, num_nodes, colors, line_style_list, T)
                 ## Still need to add opt player vs. opt opponent
-                control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
-                if control not in ['1', '2']:
+                control = input("Opt Player vs. Opt Opponent [1] / Opt Player vs. Sub-opt Opponent [2] / Sub-opt "
+                                "Player vs. Opt Opponent [3]? ")
+                if control not in ['1', '2', '3']:
                     print('Invalid game setting. Select again.')
                 else:  # Valid game setting
                     tot_cost = 0
@@ -844,7 +851,7 @@ if __name__ == "__main__":
                                 ### Need to check line 846 - 848 correctness!!!! Continue Here
                                 # Plot game process
                                 opt_player_action = game_plt(full_tree, opt_oppo_action, Q, colors, UV_dict, t,
-                                                             prev_x_action, R)
+                                                             prev_x_action, R, control)
                                 opt_player_state = opt_player_action.state
                                 prev_x_action = opt_player_action  # Reassign prev_x_action for next iteration use
 
@@ -854,11 +861,10 @@ if __name__ == "__main__":
                             else:   # When t != 0
                                 opt_oppo_action = UV_dict[f"U_t={t} ({prev_x_action.state}, {opt_oppo_action.state})"].\
                                     action
-                                prev_x_action = opt_oppo_action.parent_state
 
                                 # Plot game process
                                 opt_player_action = game_plt(full_tree, opt_oppo_action, Q, colors, UV_dict, t,
-                                                             prev_x_action, R)
+                                                             prev_x_action, R, control)
                                 opt_player_state = opt_player_action.state
 
                                 tot_cost += norm(np.array(prev_x_action.state) - np.array(opt_player_state), 2)
@@ -878,6 +884,44 @@ if __name__ == "__main__":
                                   fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
 
+                    elif control == '3':
+                        for t in range(T+1):
+                            if t == 0:
+                                opt_oppo_action = UV_dict[f"U_t={t} ({dummy_i.state}, {None})"].action
+                                prev_x_action = opt_oppo_action.parent_state
+
+                                # Plot game process
+                                ram_player_action = game_plt(full_tree, opt_oppo_action, Q, colors, UV_dict, t,
+                                                             prev_x_action, R, control)
+                                ram_player_state = ram_player_action.state
+                                prev_x_action = ram_player_action
+
+                                # Update oppo_hist
+                                oppo_hist[f"i{t}"] = opt_oppo_action.state
+                            else:
+                                opt_oppo_action = UV_dict[f"U_t={t} ({prev_x_action.state}, {opt_oppo_action.state}"
+                                                          f")"].action
+
+                                ram_player_action = game_plt(full_tree, opt_oppo_action, Q, colors, UV_dict, t,
+                                                             prev_x_action, R, control)
+                                ram_player_state = ram_player_action.state
+
+                                tot_cost += norm(np.array(prev_x_action.state) - np.array(ram_player_state), 2)
+                                prev_x_action = ram_player_action
+
+                                # Update oppo_hist
+                                oppo_hist[f"i{t}"] = opt_oppo_action.state
+
+                            # Display
+                            print(f"\nt={t}")
+                            print(f"Optimal i{t}: {opt_oppo_action.state}")
+                            print(f"Sub-optimal Player State Approximation: {ram_player_state}")
+                            print(f"Total Cost: {tot_cost}")
+
+                        plt.title(fr"Optimal Opponent vs. Sub-optimal Player " + '\n' +
+                                  fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                                  fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
+                                  fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     plt.show()
                 msg = input("Rerun? [Y/N] ")
 
