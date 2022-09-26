@@ -249,7 +249,8 @@ def coord_gen(set, delta_X_t, disc_para, bound_rmv):
             if sides[0] == sides[1]:
                 coord_h = np.arange(bound_coord[0], bound_coord[2], delta_X_t)
                 coord_h += (1 / 2) * abs(bound_coord[2] - coord_h[-1])
-                coord_v = coord_h
+                coord_v = np.arange(bound_coord[1], bound_coord[3], delta_X_t)
+                coord_v += (1 / 2) * abs(bound_coord[3] - coord_v[-1])
                 """
                 print(f"coord_h: {coord_h}")
                 print(f"coord_v: {coord_v}")
@@ -480,7 +481,7 @@ if __name__ == "__main__":
             extra_disc_para = 5
 
             ## User selected parameters
-            performance_bound = 0.1  # Desired performance difference bound
+            performance_bound = 0.5  # Desired performance difference bound
             boundary_rmv = 'y'  # Determines if we want boundary discrete points in linspace discretized spaces
 
             Q = dict()
@@ -744,7 +745,7 @@ if __name__ == "__main__":
                 'R': R,
                 'method': method
             }
-            tree_file = open('tree_info_new', 'wb')
+            tree_file = open(f'tree_info_new (epsilon = {performance_bound}, extra_disc_para = {extra_disc_para}', 'wb')
             pickle.dump(tree_info, tree_file)
             tree_file.close()
 

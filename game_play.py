@@ -203,7 +203,7 @@ if __name__ == "__main__":
         if method.lower() == 'new':
 
             # Load tree info new files into the program
-            tree_file = open('tree_info_new', 'rb')
+            tree_file = open(f'tree_info_new (epsilon = {0.1}, extra_disc_para = {5})', 'rb')
             tree_info = pickle.load(tree_file)
             tree_file.close()
 
