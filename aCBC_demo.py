@@ -5,6 +5,27 @@ from numpy.linalg import norm
 from random import *
 
 
+def all_Q_plt(Q, node_num, color_set, line_style_set, T):
+    """
+    :param Q: dict
+    :param node_num: int
+    :param color_set: list
+    :param line_style_set: list
+    :param T: int
+    :return: None
+    """
+    # Plot all given convex sets
+    for t_val in range(T + 1):
+        for node in range(1, node_num + 1):
+            hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
+            plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=color_set[t_val], edgecolor=color_set[t_val],
+                     linewidth=2,
+                     linestyle=line_style_set[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
+    plt.legend(fontsize=8)
+    plt.grid(True)
+    plt.axis(plt_scale)
+    return None
+
 def value_approx_display(state_1, state_2, value_obj, counter):
     """
     :param state_1: State
@@ -643,31 +664,34 @@ if __name__ == "__main__":
             """
             Plot trajectory result. Allow user to control opponent, while player always applies its optimal strategy by 
             computer. Allow re-run functionality.
+            IDEA: Separate game computation section (discretization, optimal value approximation) and game play section
+            (display) as two different .py files
             """
-            # Plot all given convex sets
-            for t_val in range(T + 1):
-                for node in range(1, num_nodes + 1):
-                    hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
-                    plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=colors[t_val], edgecolor=colors[t_val],
-                             linewidth=2,
-                             linestyle=line_style_list[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
-            plt.legend(fontsize=8)
-            plt.grid(True)
-            plt.axis(plt_scale)
+            # # Plot all given convex sets
+            # for t_val in range(T + 1):
+            #     for node in range(1, num_nodes + 1):
+            #         hcoord_q, vcoord_q = Q[f"Q_t={t_val}^i={node}"].region.exterior.xy
+            #         plt.fill(hcoord_q, vcoord_q, alpha=0.1, facecolor=colors[t_val], edgecolor=colors[t_val],
+            #                  linewidth=2,
+            #                  linestyle=line_style_list[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
+            # plt.legend(fontsize=8)
+            # plt.grid(True)
+            # plt.axis(plt_scale)
 
             msg = ''
-            oppo_hist = disc()
+            oppo_hist = dict()
 
             while msg.lower() != 'n':
+                all_Q_plt(Q, num_nodes, colors, line_style_list, T)
                 control = input("Player (PC) vs. Opponent (PC) [1] / Player (PC) vs. Opponent (User) [2]? ")
                 if control not in ['1', '2']:
                     print('Invalid game setting. Select again.')
-                else:   # Valid game setting
+                else:  # Valid game setting
                     if control == '2':  # Case of Player (PC) vs. Opponent (User)
                         # Initialize the game
                         t = 0
-                        opt_player_action = None
-                        opt_player_state = None
+                        opt_player_action = dummy_i
+                        opt_player_state = dummy_i.state
                         tot_cost = 0
 
                         while t <= T:
@@ -676,9 +700,9 @@ if __name__ == "__main__":
 
                             oppo_node = int(input("Enter opponent action: "))
                             if t == 0:
-                                if oppo_node not in range(num_nodes+1):
+                                if oppo_node not in range(num_nodes + 1):
                                     print("Invalid selection of node. Try again.")
-                                else:   # oppo_node is valid with given graph
+                                else:  # oppo_node is valid with given graph
                                     oppo_hist[f"i{t}"] = oppo_node  # Store selected oppo_node to oppo_hist
 
                                     """
@@ -687,23 +711,26 @@ if __name__ == "__main__":
                                     Needed: tree_no_lf_copy, oppo_node, Q, colors, t, UV_dict 
                                     """
                                     # Find corresponding i0 State object in the tree
+                                    # oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node
+                                    # and action.t_step == t][0]
+
                                     oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node and
-                                                   action.t_step == t][0]
+                                                   action.parent_state == prev_x_action][0]
 
                                     # Plot selected Q0
                                     Q0 = Q[f"Q_t={t}^i={oppo_node}"]
-                                    set_plotter(Q0, colors[t], alpha_val=0.5)
+                                    set_plotter(Q0.region, colors[t], alpha_val=0.5)
 
                                     # Find disc x0 in Q0
-                                    disc_x_list = [action.state for action in tree_no_lf_copy if action.t_step == t and
-                                                   action.parent_state == oppo_action]
+                                    disc_x_list = [action.state for action in tree_no_lf_copy if action.parent_state ==
+                                                   oppo_action]
 
                                     # Plot disc x0 in Q0
                                     for disc_x in disc_x_list:
                                         plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
 
                                     # Find optimal player action x0 (Can be made UDF)
-                                    opt_player_action = UV_dict[f"V_t={t} ({oppo_action.parent_state.state}, " \
+                                    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, "
                                                                 f"{oppo_action.state})"].action
                                     opt_player_state = opt_player_action.state
 
@@ -715,18 +742,48 @@ if __name__ == "__main__":
                                     # Display
                                     print(f"Optimal Player State Approximation: {opt_player_state}")
 
-                                    pass    # Find oppo_action, plot discrete x0 with Q0
-
-                            else:   # t != 0
+                            else:  # t != 0
                                 if oppo_node not in [action.state for action in prev_x_action.children_state_list]:
                                     print("Invalid selection of node. Try again.")
-                                else:   # selected oppo_node is a reachable node
-                                    pass    # Find oppo_action, plot discrete xt with Qt \cap R(x_t-1) and plot Qt
+                                else:  # selected oppo_node is a reachable node
+                                    oppo_hist[f"i{t}"] = oppo_node
 
+                                    oppo_action = [action for action in tree_no_lf_copy if action.state == oppo_node and
+                                                   action.parent_state == prev_x_action][0]
 
-                        pass    # Need plot code
-                    else:       # Case of Player (PC) vs. Opponent (User)
-                        pass    # Need plot code
+                                    # Plot selected Qt
+                                    Qt = Q[f"Q_t={t}^i={oppo_node}"]
+                                    set_plotter(Qt.region, colors[t], alpha_val=0.25)
+
+                                    # Plot R(previous_x) intersect Qt
+                                    R_set = reach_set_calc(prev_x_state, R)
+                                    R_intersect_Q = Qt.region.intersection(R_set)
+                                    set_plotter(R_intersect_Q, colors[t], alpha_val=0.5)
+
+                                    # Find disc xt in R(previous_x) intersect Qt
+                                    disc_x_list = [action.state for action in tree_no_lf_copy if action.parent_state ==
+                                                   oppo_action]
+
+                                    # Plot disc xt in R(previous_x) intersect Qt
+                                    for disc_x in disc_x_list:
+                                        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.5, marker='.')
+
+                                    # Find optimal player action xt in R(previous_x) intersect Qt
+                                    opt_player_action = UV_dict[f"V_t={t} ({prev_x_action.state}, {oppo_action.state}" 
+                                                                f")"].action
+                                    opt_player_state = opt_player_action.state
+
+                                    # Plot optimal x_0 in R(previous_x) intersect Qt
+                                    plt.scatter(opt_player_state[0], opt_player_state[1], color='black', linewidths=0.1,
+                                                marker='.')
+
+                                    # Display
+                                    print(f"Optimal Player State Approximation: {opt_player_state}")
+
+                                    t += 1
+
+                    else:  # Case of Player (PC) vs. Opponent (User)
+                        pass  # Need plot code
                     plt.show()
                 msg = input("Rerun? [Y/N] ")
 
@@ -1080,7 +1137,7 @@ if __name__ == "__main__":
 
                             oppo_node = int(input("Enter opponent action: "))
                             if t == 0:
-                                if oppo_node not in range(num_nodes+1):
+                                if oppo_node not in range(num_nodes + 1):
                                     print("Invalid selection of node. Try again.")
                                 else:
                                     oppo_action = [action for action in value_eval_queue1 if
@@ -1135,7 +1192,7 @@ if __name__ == "__main__":
 
                                     print(f"Optimal Player State Approximation: {opt_player_state}")
 
-                                    # Plot Q
+                                    # Plot Qt
                                     Qt = Q[f"Q_t={t}^i={oppo_action.state}"]
                                     set_plotter(Qt.region, colors[t], alpha_val=0.25)
 
