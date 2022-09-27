@@ -89,8 +89,8 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
     disc_x_list = [action.state for action in full_tree if action.parent_state == oppo_action]
 
     # Plot disc xt in the set
-    # for disc_x in disc_x_list:
-    #     plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
+    for disc_x in disc_x_list:
+        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
 
     if control in ['1', '2']:   # Opt pl vs. Opt op or Opt pl vs. Sub-opt op
         # Find optimal player action xt
@@ -202,12 +202,12 @@ if __name__ == "__main__":
     (display) as two different .py files
     """
     method = ''
-    while method != 'terminate':
+    while method.lower() != 'terminate':
         method = input("Which method to use or terminate the program? [Old/New/Terminate]: ")
         if method.lower() == 'new':
 
             # Load tree info new files into the program
-            tree_file = open(f'tree_info_new (epsilon = {0.5}, extra_disc_para = {5})', 'rb')
+            tree_file = open(f'tree_info_new (epsilon = {0.15}, extra_disc_para = {5})', 'rb')
             tree_info = pickle.load(tree_file)
             tree_file.close()
 
@@ -226,6 +226,15 @@ if __name__ == "__main__":
             performance_bound = tree_info['performance_bound']
             R = tree_info['R']
             method = tree_info['method']
+
+            """
+            # Plot all convex sets
+            all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale)
+            plt.title(f"Given Convex Sets")
+            ax = plt.gca()
+            ax.set_aspect(1)
+            plt.show()
+            """
 
             msg = ''
             oppo_hist = dict()
@@ -429,7 +438,6 @@ if __name__ == "__main__":
                                   fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
                                   fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     plt.show()
-                msg = input(f"Rerun (Method: {method})? [Y/N] ")
 
                 # Save Simulation Results
                 sim_result = {
@@ -438,9 +446,12 @@ if __name__ == "__main__":
                     'extra_disc_para': extra_disc_para
                 }
                 sim_file = open(f'sim_result_new (epsilon = {performance_bound}, extra_disc_para = {extra_disc_para})',
-                                'ab')
+                                'wb')
                 pickle.dump(sim_result, sim_file)
                 sim_file.close()
+
+                msg = input(f"Rerun (Method: {method})? [Y/N] ")
+
             #################################### End Here ####################################
 
             #################################### Display ####################################

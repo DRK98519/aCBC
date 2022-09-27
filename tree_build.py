@@ -181,12 +181,19 @@ def graph_constraint(i_t):
     :type i_t: int
     :return: reachable_nodes: list
     """
+    ## 3 node graph
+    # if i_t == 1:
+    #     reachable_nodes = [1, 3]
+    # elif i_t == 2:
+    #     reachable_nodes = [1, 3]
+    # else:
+    #     reachable_nodes = [2, 3]
+
+    ## 2 node graph
     if i_t == 1:
-        reachable_nodes = [1, 3]
+        reachable_nodes = [1, 2]
     elif i_t == 2:
-        reachable_nodes = [1, 3]
-    else:
-        reachable_nodes = [2, 3]
+        reachable_nodes = [2, 1]
     return reachable_nodes
 
 
@@ -420,7 +427,7 @@ class Value:  # Value function
 
 if __name__ == "__main__":
     ## Problem set-up parameters
-    num_nodes = 3  # Number of nodes in graph
+    num_nodes = 2  # Number of nodes in graph
     scale_para = 1  # State space X region
     plt_scale = [0, scale_para, 0, scale_para]
     # vertices_list = {
@@ -461,56 +468,100 @@ if __name__ == "__main__":
     T = 2  # Finite horizon
     ratio = 1   # Expand or compress ratio for convex sets
 
-    vertices_list = {
-        "t=0, i=1": [val / ratio for val in [np.array([0.2, 0.3]), np.array([0.4, 0.3]), np.array([0.4, 0.65]),
-                                             np.array([0.2, 0.65])]],
-        "t=0, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.8, 0.3]), np.array([0.8, 0.5]),
-                                             np.array([0.3, 0.5])]],
-        "t=0, i=3": [val / ratio for val in [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.86]),
-                                             np.array([0.25, 0.86])]],
-        "t=1, i=1": [val / ratio for val in [np.array([0.35, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 0.]),
-                                             np.array([0.2, 0.7])]],
-        "t=1, i=2": [val / ratio for val in [np.array([0.2, 0.1]), np.array([0.4, 0.1]), np.array([0.4, 0.5]),
-                                             np.array([0.2, 0.5])]],
-        "t=1, i=3": [val / ratio for val in [np.array([0.33, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]),
-                                             np.array([0.33, 0.8])]],
-        "t=2, i=1": [val / ratio for val in [np.array([0.28, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.66]),
-                                             np.array([0.28, 0.66])]],
-        "t=2, i=2": [val / ratio for val in [np.array([0.25, 0.132]), np.array([0.6, 0.132]), np.array([0.6, 0.75]),
-                                             np.array([0.25, 0.75])]],
-        "t=2, i=3": [val / ratio for val in [np.array([0.35, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.72]),
-                                             np.array([0.35, 0.72])]]
-    }
-    # vertices_list = {
-    #     "t=0, i=1": [val/ratio for val in [np.array([0.15, 0.13]), np.array([0.4, 0.13]), np.array([0.4, 0.77]),
-    #                                        np.array([0.15, 0.77])]],
-    #     "t=0, i=2": [val/ratio for val in [np.array([0.22, 0.33]), np.array([0.48, 0.33]), np.array([0.48, 0.83]),
-    #                                        np.array([0.22, 0.83])]],
-    #     "t=0, i=3": [val/ratio for val in [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.86]),
-    #                                        np.array([0.25, 0.86])]],
-    #     "t=1, i=1": [val/ratio for val in [np.array([0.2, 0.3]), np.array([0.45, 0.3]), np.array([0.45, 0.7]),
-    #                                        np.array([0.2, 0.7])]],
-    #     "t=1, i=2": [val/ratio for val in [np.array([0.27, 0.18]), np.array([0.53, 0.18]), np.array([0.53, 0.9]),
-    #                                        np.array([0.27, 0.9])]],
-    #     "t=1, i=3": [val/ratio for val in [np.array([0.33, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]),
-    #                                        np.array([0.33, 0.8])]],
-    #     "t=2, i=1": [val/ratio for val in [np.array([0.28, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.66]),
-    #                                        np.array([0.28, 0.66])]],
-    #     "t=2, i=2": [val/ratio for val in [np.array([0.25, 0.132]), np.array([0.6, 0.132]), np.array([0.6, 0.75]),
-    #                                        np.array([0.25, 0.75])]],
-    #     "t=2, i=3": [val/ratio for val in [np.array([0.35, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.72]),
-    #                                        np.array([0.35, 0.72])]]
-    # }
-    # vertices_list = convex_vertices_gen(num_nodes, T, scale_para)
-    # R = 2 * scale_para     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid
-    # this issue
+    if num_nodes == 3:
+        vertices_list = {
+            "t=0, i=1": [val / ratio for val in [np.array([0.23, 0.3]), np.array([0.4, 0.3]), np.array([0.4, 0.52]),
+                                                 np.array([0.23, 0.52])]],
+            "t=0, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 0.5]),
+                                                 np.array([0.3, 0.5])]],
+            "t=0, i=3": [val / ratio for val in [np.array([0.25, 0.28]), np.array([0.43, 0.28]), np.array([0.43, 0.5]),
+                                                 np.array([0.25, 0.5])]],
+            "t=1, i=1": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.46, 0.3]), np.array([0.46, 0.55]),
+                                                 np.array([0.3, 0.55])]],
+            "t=1, i=2": [val / ratio for val in [np.array([0.22, 0.24]), np.array([0.4, 0.24]), np.array([0.4, 0.5]),
+                                                 np.array([0.22, 0.5])]],
+            "t=1, i=3": [val / ratio for val in [np.array([0.3, 0.23]), np.array([0.45, 0.23]), np.array([0.45, 0.5]),
+                                                 np.array([0.3, 0.5])]],
+            "t=2, i=1": [val / ratio for val in [np.array([0.275, 0.05]), np.array([0.4, 0.05]), np.array([0.4, 0.5]),
+                                                 np.array([0.275, 0.5])]],
+            "t=2, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.6, 0.3]), np.array([0.6, 0.7]),
+                                                 np.array([0.3, 0.7])]],
+            "t=2, i=3": [val / ratio for val in [np.array([0.3, 0.2]), np.array([0.6, 0.2]), np.array([0.6, 0.5]),
+                                                 np.array([0.3, 0.5])]]
+        }
 
-    ## Formatting
+        # vertices_list = {
+        #     "t=0, i=1": [val / ratio for val in [np.array([0.2, 0.3]), np.array([0.4, 0.3]), np.array([0.4, 0.65]),
+        #                                          np.array([0.2, 0.65])]],
+        #     "t=0, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.8, 0.3]), np.array([0.8, 0.5]),
+        #                                          np.array([0.3, 0.5])]],
+        #     "t=0, i=3": [val / ratio for val in [np.array([0.25, 0.1]), np.array([0.5, 0.1]), np.array([0.5, 0.5]),
+        #                                          np.array([0.25, 0.5])]],
+        #     "t=1, i=1": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 0.8]),
+        #                                          np.array([0.3, 0.8])]],
+        #     "t=1, i=2": [val / ratio for val in [np.array([0.2, 0.1]), np.array([0.4, 0.1]), np.array([0.4, 0.5]),
+        #                                          np.array([0.2, 0.5])]],
+        #     "t=1, i=3": [val / ratio for val in [np.array([0.3, 0.05]), np.array([0.5, 0.05]), np.array([0.5, 0.5]),
+        #                                          np.array([0.3, 0.5])]],
+        #     "t=2, i=1": [val / ratio for val in [np.array([0.275, 0.05]), np.array([0.4, 0.05]), np.array([0.4, 0.5]),
+        #                                          np.array([0.275, 0.5])]],
+        #     "t=2, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.6, 0.3]), np.array([0.6, 0.7]),
+        #                                          np.array([0.3, 0.7])]],
+        #     "t=2, i=3": [val / ratio for val in [np.array([0.3, 0.2]), np.array([0.6, 0.2]), np.array([0.6, 0.5]),
+        #                                          np.array([0.3, 0.5])]]
+        # }
+        # # vertices_list = {
+        # #     "t=0, i=1": [val/ratio for val in [np.array([0.15, 0.13]), np.array([0.4, 0.13]), np.array([0.4, 0.77]),
+        # #                                        np.array([0.15, 0.77])]],
+        # #     "t=0, i=2": [val/ratio for val in [np.array([0.22, 0.33]), np.array([0.48, 0.33]), np.array([0.48, 0.83]),
+        # #                                        np.array([0.22, 0.83])]],
+        # #     "t=0, i=3": [val/ratio for val in [np.array([0.25, 0.2]), np.array([0.5, 0.2]), np.array([0.5, 0.86]),
+        # #                                        np.array([0.25, 0.86])]],
+        # #     "t=1, i=1": [val/ratio for val in [np.array([0.2, 0.3]), np.array([0.45, 0.3]), np.array([0.45, 0.7]),
+        # #                                        np.array([0.2, 0.7])]],
+        # #     "t=1, i=2": [val/ratio for val in [np.array([0.27, 0.18]), np.array([0.53, 0.18]), np.array([0.53, 0.9]),
+        # #                                        np.array([0.27, 0.9])]],
+        # #     "t=1, i=3": [val/ratio for val in [np.array([0.33, 0.4]), np.array([0.55, 0.4]), np.array([0.55, 0.8]),
+        # #                                        np.array([0.33, 0.8])]],
+        # #     "t=2, i=1": [val/ratio for val in [np.array([0.28, 0.4]), np.array([0.65, 0.4]), np.array([0.65, 0.66]),
+        # #                                        np.array([0.28, 0.66])]],
+        # #     "t=2, i=2": [val/ratio for val in [np.array([0.25, 0.132]), np.array([0.6, 0.132]), np.array([0.6, 0.75]),
+        # #                                        np.array([0.25, 0.75])]],
+        # #     "t=2, i=3": [val/ratio for val in [np.array([0.35, 0.1]), np.array([0.45, 0.1]), np.array([0.45, 0.72]),
+        # #                                        np.array([0.35, 0.72])]]
+        # # }
+        # # vertices_list = convex_vertices_gen(num_nodes, T, scale_para)
+        # # R = 2 * scale_para     # The program requires R to be specific to given Q-sets. Choose an R big enough to avoid
+        # # this issue
+        #
+        # ## Formatting
+    elif num_nodes == 2:
+        vertices_list = {
+            "t=0, i=1": [val / ratio for val in [np.array([0.23, 0.3]), np.array([0.4, 0.3]), np.array([0.4, 0.52]),
+                                                 np.array([0.23, 0.52])]],
+            "t=0, i=2": [(val - 0.01) / ratio + 0.02 for val in [np.array([0.3, 0.3]), np.array([0.5, 0.3]), np.array([0.5, 0.5]),
+                                                 np.array([0.3, 0.5])]],
+            "t=0, i=3": [val / ratio for val in [np.array([0.25, 0.28]), np.array([0.43, 0.28]), np.array([0.43, 0.5]),
+                                                 np.array([0.25, 0.5])]],
+            "t=1, i=1": [(val - 0.05) / ratio for val in [np.array([0.3, 0.3]), np.array([0.46, 0.3]), np.array([0.46, 0.55]),
+                                                 np.array([0.3, 0.55])]],
+            "t=1, i=2": [val / ratio for val in [np.array([0.22, 0.24]), np.array([0.4, 0.24]), np.array([0.4, 0.5]),
+                                                 np.array([0.22, 0.5])]],
+            "t=1, i=3": [val / ratio for val in [np.array([0.3, 0.23]), np.array([0.45, 0.23]), np.array([0.45, 0.5]),
+                                                 np.array([0.3, 0.5])]],
+            "t=2, i=1": [(val - 0.02) / ratio + 0.05 for val in [np.array([0.275, 0.05]), np.array([0.4, 0.05]), np.array([0.4, 0.5]),
+                                                 np.array([0.275, 0.5])]],
+            "t=2, i=2": [val / ratio for val in [np.array([0.3, 0.3]), np.array([0.6, 0.3]), np.array([0.6, 0.7]),
+                                                 np.array([0.3, 0.7])]],
+            "t=2, i=3": [val / ratio for val in [np.array([0.3, 0.2]), np.array([0.6, 0.2]), np.array([0.6, 0.5]),
+                                                 np.array([0.3, 0.5])]]
+        }
+
     colors = ['red', 'blue', 'green']
     line_style_list = ['-', '--', '-.']
 
     method = ''
-    while method != 'terminate':
+    while method.lower() != 'terminate':
         method = input("Which method to use or terminate the program? [Old/New/Terminate]: ")
         if method.lower() == "new":
             print('Need work.')
@@ -521,7 +572,7 @@ if __name__ == "__main__":
             extra_disc_para = 5
 
             ## User selected parameters
-            performance_bound = 0.5  # Desired performance difference bound
+            performance_bound = 0.12  # Desired performance difference bound
             boundary_rmv = 'y'  # Determines if we want boundary discrete points in linspace discretized spaces
 
             Q = dict()
