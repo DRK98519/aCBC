@@ -41,8 +41,8 @@ def all_Q_plt(Q, node_num, color_set, line_style_set, T, plt_scale):
             #          linestyle=line_style_set[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
             plt.fill(hcoord_q, vcoord_q, alpha=1, facecolor='none', edgecolor=color_set[t_val],
                      linewidth=1.5,
-                     linestyle=line_style_set[node - 1], label=fr"$Q_{t_val}^{{({node})}}$")
-    plt.legend(fontsize=8)
+                     linestyle=line_style_set[node - 1], label=r"$\mathcal{Q}_" + fr"{t_val}^{{({node})}}$")
+    plt.legend(fontsize=14)
     plt.grid(True)
     plt.axis(plt_scale)
     return None
@@ -73,6 +73,9 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
     :return: player_action: State
     """
     prev_x_state = prev_x_action.state
+    ax = plt.gca()
+    ax.set_aspect(1)
+
     # Plot selected Qt
     Qt = Q[f"Q_t={t}^i={oppo_action.state}"].region
     set_plotter(Qt, colors[t], alpha_val=0.05)
@@ -86,11 +89,11 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
     set_plotter(set, colors[t], alpha_val=0.1)
 
     # Find disc xt in the set
-    disc_x_list = [action.state for action in full_tree if action.parent_state == oppo_action]
+    # disc_x_list = [action.state for action in full_tree if action.parent_state == oppo_action]
 
     # Plot disc xt in the set
-    for disc_x in disc_x_list:
-        plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
+    # for disc_x in disc_x_list:
+    #     plt.scatter(disc_x[0], disc_x[1], color=colors[t], linewidths=0.1, marker='.')
 
     if control in ['1', '2']:   # Opt pl vs. Opt op or Opt pl vs. Sub-opt op
         # Find optimal player action xt
@@ -103,7 +106,8 @@ def game_plt(full_tree, oppo_action, Q, colors, UV_dict, t, prev_x_action, R, co
         player_state = player_action.state
 
     # Plot optimal xt in the set
-    plt.scatter(player_state[0], player_state[1], color='black', linewidths=0.1, marker='.')
+    plt.scatter(player_state[0], player_state[1], color=colors[t], linewidths=1.5, marker='.')
+    # plt.scatter(player_state[0], player_state[1], color='black', linewidths=0.1, marker='.')
 
     if t != 0:
         # Connect optimal xt state approximation to prev_x_state
@@ -227,19 +231,23 @@ if __name__ == "__main__":
             R = tree_info['R']
             method = tree_info['method']
 
-            """
             # Plot all convex sets
-            all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale)
-            plt.title(f"Given Convex Sets")
+            plt_scale_Q = [0, 0.8, 0, 0.8]
+            all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale_Q)
             ax = plt.gca()
             ax.set_aspect(1)
             plt.show()
-            """
+            plt_scale = [0.3, 0.4, 0.3, 0.4]
 
             msg = ''
             oppo_hist = dict()
 
             while msg.lower() != 'n':
+                # Define figure and ax for result plot figure
+                fig, ax = plt.subplots(figsize=(8, 8))
+                for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                    label.set_fontsize(22)
+
                 tot_cost = 0
                 all_Q_plt(Q, num_nodes, colors, line_style_list, T, plt_scale)
                 ## Still need to add opt player vs. opt opponent
@@ -350,10 +358,10 @@ if __name__ == "__main__":
                                     print(f"Cost: {tot_cost}")
                                     print(f"Running {method} method")
 
-                        plt.title(fr"Sub-optimal Opponent vs. Optimal Player " + '\n' +
-                                  fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
-                                  fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
-                                  fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
+                        # plt.title(fr"Sub-optimal Opponent vs. Optimal Player " + '\n' +
+                        #           fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                        #           fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
+                        #           fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
 
                     elif control == '1':  # Case of Player (PC) vs. Opponent (PC)
                         for t in range(T+1):
@@ -393,10 +401,10 @@ if __name__ == "__main__":
                             print(f"Total Cost: {tot_cost}")
                             print(f"Running {method} method")
 
-                        plt.title(fr"Optimal Opponent vs. Optimal Player " + '\n' +
-                                  fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
-                                  fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
-                                  fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
+                        # plt.title(fr"Optimal Opponent vs. Optimal Player " + '\n' +
+                        #           fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                        #           fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
+                        #           fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
 
                     elif control == '3':
                         for t in range(T+1):
@@ -433,10 +441,10 @@ if __name__ == "__main__":
                             print(f"Total Cost: {tot_cost}")
                             print(f"Running {method} method")
 
-                        plt.title(fr"Optimal Opponent vs. Sub-optimal Player " + '\n' +
-                                  fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
-                                  fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
-                                  fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
+                        # plt.title(fr"Optimal Opponent vs. Sub-optimal Player " + '\n' +
+                        #           fr"Opponent History: $i_0={oppo_hist['i0']}$, $i_1={oppo_hist['i1']}$, "
+                        #           fr"$i_2={oppo_hist['i2']}$" + "\n" + fr"$\epsilon$={performance_bound}"
+                        #           fr"(Without Boundary), Total Cost={round(tot_cost, 4)}")
                     plt.show()
 
                 # Save Simulation Results

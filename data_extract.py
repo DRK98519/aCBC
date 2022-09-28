@@ -8,7 +8,7 @@ display
 """
 
 extra_disc_para = 5
-epsilon_list = [0.5, 0.4, 0.3, 0.2, 0.15]
+epsilon_list = [0.5, 0.3, 0.2]
 tot_cost_list = []
 perform_bound_list = []
 

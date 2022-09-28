@@ -8,13 +8,15 @@ actual_diff = data(:, 2);
 
 % Plot
 figure(1)
-plot(epsilon, actual_diff, '.k', 'MarkerSize', 10)
+plot(epsilon, actual_diff, '.k', 'MarkerSize', 30)
 hold on
-plot([0; epsilon], [0; epsilon], '--b')
-legend('Actual performance difference', 'Desired performance difference')
-pbaspect([1 1 1])
-grid on
-grid minor
-xlabel('$\epsilon$', 'Interpreter','latex')
-ylabel('$\hat{U}_0$', 'Interpreter','latex')
-title('$\hat{U}_0$ vs. $\epsilon$', 'Interpreter','latex')
+plot([0; 0.6], [0; 0.6], '--k', 'LineWidth', 7)
+legend boxoff
+lgnd = legend('Actual performance difference', 'Location','northwest');
+set(lgnd, 'color', 'none')
+set(lgnd, 'FontSize', 25)
+set(gca, 'FontSize', 30)
+axis([0, 0.6, 0, 0.6])
+pbaspect([16 9 1])
+xlabel('$\epsilon$', 'Interpreter','latex', 'FontSize', 45)
+ylabel('$\hat{U}_0$', 'Interpreter','latex', 'FontSize', 45, 'Rotation', 0, 'HorizontalAlignment','right', 'VerticalAlignment', 'middle')
